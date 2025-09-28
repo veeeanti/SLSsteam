@@ -21,26 +21,37 @@ namespace MemHlp
 	template<typename ...Args>
 	bool assembleCodeAt(lm_address_t& address, const char* fmt, Args... args)
 	{
+		if (address == LM_ADDRESS_BAD)
+		{
+			g_pLog->debug("Can't write to LM_ADDRESS_BAD!\n");
+			return false;
+		}
+
 		size_t size = snprintf(nullptr, 0, fmt, args...) + 1;
 		char* code = reinterpret_cast<char*>(malloc(size));
 		snprintf(code, size, fmt, args...);
 
-		//TODO: Potentially replace with LM_AssembleEx and only allocate memory as needed
 		static lm_inst_t inst;
+		//TODO: Potentially replace with LM_AssembleEx and only allocate memory as needed
+		bool success = false;
+
 		if (!LM_Assemble(code, &inst))
 		{
 			g_pLog->debug("Failed to assemble %s!\n", code);
-			return false;
 		}
-		if (address != LM_ADDRESS_BAD && !LM_WriteMemory(address, inst.bytes, inst.size))
+		else if (!LM_WriteMemory(address, inst.bytes, inst.size))
 		{
 			g_pLog->debug("Failed to write %s to %p!\n", code, address);
-			return false;
+		}
+		else
+		{
+			g_pLog->debug("Wrote %s to %p with %i bytes\n", code, address, inst.size);
+			address += inst.size;
+			success = true;
 		}
 
-		g_pLog->debug("Wrote %s to %p with %i bytes\n", code, address, inst.size);
-		address += inst.size;
-		return true;
+		free(code);
+		return success;
 	}
 
 	std::vector<int16_t> patternToBytes(const char* pattern);
