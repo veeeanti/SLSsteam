@@ -141,6 +141,6 @@ Others:
 
 🚨This list exists purely for educational and entertainmnent purposes!
 Please do not seek out Projects listed here!
-If you decide to ignore the aformened warning you do so on your own risk!🚨
+If you decide to ignore the aforementioned warning you do so on your own risk!🚨
 
 OnetapBeta by Hammer Steam: Resells Steamless & SLSsteam. Intellectually went far enough to rename SLSsteam to deckloader2, that's about as far as their skill extends.
