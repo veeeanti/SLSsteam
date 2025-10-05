@@ -57,12 +57,11 @@ bool DLC::getDlcDataByIndex(uint32_t appId, int index, uint32_t* dlcId, bool* av
 	{
 		return false;
 	}
-	if (g_config.shouldExcludeAppId(*dlcId))
-	{
-		return false;
-	}
 
-	*available = true;
+	if (!g_config.shouldExcludeAppId(*dlcId))
+	{
+		*available = true;
+	}
 
 	if (g_config.dlcData.contains(appId))
 	{
