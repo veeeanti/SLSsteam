@@ -13,6 +13,9 @@
 #include "sdk/IClientApps.hpp"
 #include "sdk/IClientAppManager.hpp"
 
+#include "feats/apps.hpp"
+#include "feats/dlc.hpp"
+
 #include <cstddef>
 #include <cstdint>
 #include <cstdio>
@@ -173,15 +176,22 @@ static uint32_t hkCAPIJob_RequestUserStats(void* a0)
 	}
 }
 
-static bool applistRequested = false;
-static auto appIdOwnerOverride = std::map<uint32_t, int>();
-
 static void* hkClientAppManager_LaunchApp(void* pClientAppManager, uint32_t* pAppId, void* a2, void* a3, void* a4)
 {
 	if (pAppId)
 	{
-		g_pLog->once("IClientAppManager::LaunchApp(%p, %u, %p, %p, %p)\n", pClientAppManager, *pAppId, a2, a3, a4);
-		appIdOwnerOverride[*pAppId] = 0;
+		g_pLog->once
+		(
+			"%s(%p, %u, %p, %p, %p)\n",
+
+			Hooks::IClientAppManager_LaunchApp.name.c_str(),
+			pClientAppManager,
+			*pAppId,
+			a2,
+			a3,
+			a4
+		);
+		Apps::launchApp(*pAppId);
 	}
 
 	//Do not do anything in post! Otherwise App launching will break
@@ -191,36 +201,47 @@ static void* hkClientAppManager_LaunchApp(void* pClientAppManager, uint32_t* pAp
 static bool hkClientAppManager_IsAppDlcInstalled(void* pClientAppManager, uint32_t appId, uint32_t dlcId)
 {
 	const bool ret = Hooks::IClientAppManager_IsAppDlcInstalled.originalFn.fn(pClientAppManager, appId, dlcId);
-	g_pLog->once("IClientAppManager::IsAppDlcInstalled(%p, %u, %u) -> %i\n", pClientAppManager, appId, dlcId, ret);
+	g_pLog->once
+	(
+		"%s(%p, %u, %u) -> %i\n",
 
-	//Do not pretend things are installed while downloading Apps, otherwise downloads will break for some of them
-	auto state = g_pClientAppManager->getAppInstallState(appId);
-	if (state & APPSTATE_DOWNLOADING || state & APPSTATE_INSTALLING)
+		Hooks::IClientAppManager_IsAppDlcInstalled.name.c_str(),
+		pClientAppManager,
+		appId,
+		dlcId,
+		ret
+	);
+
+	if (DLC::isAppDlcInstalled(appId, dlcId))
 	{
-		g_pLog->once("Skipping DlcId %u because AppId %u has AppState %i\n", dlcId, appId, state);
-		return ret;
+		return true;
 	}
 
-	if (g_config.shouldExcludeAppId(dlcId))
-	{
-		return ret;
-	}
-
-	return true;
+	return ret;
 }
 
 static bool hkClientAppManager_BIsDlcEnabled(void* pClientAppManager, uint32_t appId, uint32_t dlcId, void* a3)
 {
 	const bool ret = Hooks::IClientAppManager_BIsDlcEnabled.originalFn.fn(pClientAppManager, appId, dlcId, a3);
-	g_pLog->once("IClientAppManager::BIsDlcEnabled(%p, %u, %u, %p) -> %i\n", pClientAppManager, appId, dlcId, a3, ret);
+	g_pLog->once
+	(
+		"%s(%p, %u, %u, %p) -> %i\n",
 
-	//TODO: Add check for legit ownership to allow toggle on/off
-	if (g_config.shouldExcludeAppId(dlcId))
+		Hooks::IClientAppManager_BIsDlcEnabled.name.c_str(),
+		pClientAppManager,
+		appId,
+		dlcId,
+		a3,
+		ret
+	);
+
+	
+	if (DLC::isDlcEnabled(appId))
 	{
-		return ret;
+		return true;
 	}
 
-	return true;
+	return ret;
 }
 
 static bool hkClientAppManager_GetUpdateInfo(void* pClientAppManager, uint32_t appId, uint32_t* a2)
@@ -228,7 +249,7 @@ static bool hkClientAppManager_GetUpdateInfo(void* pClientAppManager, uint32_t a
 	const bool success = Hooks::IClientAppManager_GetAppUpdateInfo.originalFn.fn(pClientAppManager, appId, a2);
 	g_pLog->info("IClientAppManager::GetUpdateInfo(%p, %u, %p) -> %i\n", pClientAppManager, appId, a2, success);
 
-	if (g_config.isAddedAppId(appId))
+	if (Apps::shouldDisableUpdates(appId))
 	{
 		g_pLog->once("Disabled updates for %u\n", appId);
 		return false;
@@ -263,44 +284,49 @@ static void hkClientAppManager_PipeLoop(void* pClientAppManager, void* a1, void*
 
 static unsigned int hkClientApps_GetDLCCount(void* pClientApps, uint32_t appId)
 {
-	unsigned int count = Hooks::IClientApps_GetDLCCount.originalFn.fn(pClientApps, appId);
-	if (g_config.dlcData.contains(appId))
+	uint32_t count = Hooks::IClientApps_GetDLCCount.originalFn.fn(pClientApps, appId);
+	g_pLog->once
+	(
+		"%s(%p, %u) -> %u\n",
+
+		Hooks::IClientApps_GetDLCCount.name.c_str(),
+		pClientApps,
+		appId,
+		count
+	);
+
+	const uint32_t override = DLC::getDlcCount(appId);
+	if (override)
 	{
-		count = g_config.dlcData[appId].dlcIds.size();
+		return override;
 	}
 
-	g_pLog->once("IClientApps::GetDLCCount(%p, %u) -> %u\n", pClientApps, appId, count);
 	return count;
 }
 
 static bool hkClientApps_GetDLCDataByIndex(void* pClientApps, uint32_t appId, int dlcIndex, uint32_t* pDlcId, bool* pIsAvailable, char* pChDlcName, size_t dlcNameLen)
 {
-	bool ret;
+	bool ret = DLC::getDlcDataByIndex(appId, dlcIndex, pDlcId, pIsAvailable, pChDlcName, dlcNameLen);
 
-	if (g_config.dlcData.contains(appId))
-	{
-		auto& data = g_config.dlcData[appId];
-		auto dlc = std::next(data.dlcIds.begin(), dlcIndex);
-
-		*pDlcId = dlc->first;
-
-		//No clue if we have to check for errors during printf since the devs hopefully didn't fuck
-		//up the dlcNameLen. Who knows though
-		snprintf(pChDlcName, dlcNameLen, "%s", dlc->second.c_str());
-
-		ret = true;
-	}
-	else
+	if (!ret)
 	{
 		ret = Hooks::IClientApps_GetDLCDataByIndex.originalFn.fn(pClientApps, appId, dlcIndex, pDlcId, pIsAvailable, pChDlcName, dlcNameLen);
 	}
 
-	g_pLog->once("IClientApps::GetDLCDataByIndex(%p, %u, %i, %p, %p, %s, %i) -> %i\n", pClientApps, appId, dlcIndex, pDlcId, pIsAvailable, pChDlcName, dlcNameLen, ret);
+	g_pLog->once
+	(
+		"%s(%p, %u, %i, %p, %p, %s, %i) -> %i\n",
 
-	if (pIsAvailable && pDlcId && !g_config.shouldExcludeAppId(*pDlcId))
-	{
-		*pIsAvailable = true;
-	}
+		Hooks::IClientApps_GetDLCDataByIndex.name.c_str(),
+		pClientApps,
+		appId,
+		dlcIndex,
+		pDlcId,
+		pIsAvailable,
+		pChDlcName,
+		dlcNameLen,
+		ret
+	);
 
 	return ret;
 }
@@ -328,9 +354,17 @@ static void hkClientApps_PipeLoop(void* pClientApps, void* a1, void* a2, void* a
 static bool hkClientRemoteStorage_IsCloudEnabledForApp(void* pClientRemoteStorage, uint32_t appId)
 {
 	const bool enabled = Hooks::IClientRemoteStorage_IsCloudEnabledForApp.originalFn.fn(pClientRemoteStorage, appId);
-	g_pLog->once("IClientRemoteStorage::IsCloudEnabledForApp(%p, %u) -> %i\n", pClientRemoteStorage, appId, enabled);
+	g_pLog->once
+	(
+		"%s(%p, %u) -> %i\n",
 
-	if (g_config.isAddedAppId(appId))
+		Hooks::IClientRemoteStorage_IsCloudEnabledForApp.name.c_str(),
+		pClientRemoteStorage,
+		appId,
+		enabled
+	);
+
+	if (Apps::shouldDisableCloud(appId))
 	{
 		g_pLog->once("Disabled cloud for %u\n", appId);
 		return false;
@@ -356,15 +390,22 @@ static void hkClientRemoteStorage_PipeLoop(void* pClientRemoteStorage, void* a1,
 static bool hkClientUser_BIsSubscribedApp(void* pClientUser, uint32_t appId)
 {
 	const bool ret = Hooks::IClientUser_BIsSubscribedApp.tramp.fn(pClientUser, appId);
+	g_pLog->once
+	(
+		"%s(%p, %u) -> %i\n",
 
-	g_pLog->once("IClientUser::BIsSubscribedApp(%p, %u) -> %i\n", pClientUser, appId, ret);
+		Hooks::IClientUser_BIsSubscribedApp.name.c_str(),
+		pClientUser,
+		appId,
+		ret
+	);
 
-	if (g_config.shouldExcludeAppId(appId))
+	if (DLC::isSubscribed(appId))
 	{
-		return ret;
+		return true;
 	}
 
-	return true;
+	return ret;
 }
 
 __attribute__((hot))
@@ -373,88 +414,22 @@ static bool hkClientUser_CheckAppOwnership(void* pClientUser, uint32_t appId, CA
 	const bool ret = Hooks::IClientUser_CheckAppOwnership.tramp.fn(pClientUser, appId, pOwnershipInfo);
 
 	//Do not log pOwnershipInfo because it gets deleted very quickly, so it's pretty much useless in the logs
-	g_pLog->once("IClientUser::CheckAppOwnership(%p, %u) -> %i\n", pClientUser, appId, ret);
+	g_pLog->once
+	(
+		"%s(%p, %u) -> %i\n",
 
-	//Wait Until GetSubscribedApps gets called once to let Steam request and populate legit data first.
-	//Afterwards modifying should hopefully not affect false positives anymore
-	if (!applistRequested || g_config.shouldExcludeAppId(appId) || !pOwnershipInfo || !g_currentSteamId)
+		Hooks::IClientUser_CheckAppOwnership.name.c_str(),
+		pClientUser,
+		appId,
+		ret
+	);
+
+	if (Apps::checkAppOwnership(appId, pOwnershipInfo))
 	{
-		return ret;
+		return true;
 	}
 
-	const uint32_t denuvoOwner = g_config.getDenuvoGameOwner(appId);
-	//Do not modify Denuvo enabled Games
-	if (!g_config.denuvoSpoof && denuvoOwner && denuvoOwner != g_currentSteamId)
-	{
-		//Would love to log the SteamId, but for users anonymity I won't
-		g_pLog->once("Skipping %u because it's a Denuvo game from someone else\n", appId);
-		return ret;
-	}
-
-	if (g_config.isAddedAppId(appId) || (g_config.playNotOwnedGames && !pOwnershipInfo->purchased))
-	{
-		if (!denuvoOwner || denuvoOwner == g_currentSteamId)
-		{
-			//Changing the purchased field is enough, but just for nicety in the Steamclient UI we change the owner too
-			pOwnershipInfo->ownerSteamId = g_currentSteamId;
-			pOwnershipInfo->familyShared = false;
-		}
-		else if (denuvoOwner)
-		{
-			pOwnershipInfo->ownerSteamId = denuvoOwner;
-			pOwnershipInfo->familyShared = true;
-		}
-
-		pOwnershipInfo->purchased = true;
-		//Unnessecary but whatever
-		pOwnershipInfo->permanent = true;
-
-		//Found in backtrace
-		pOwnershipInfo->releaseState = 4;
-		pOwnershipInfo->field10_0x25 = 0;
-		//Seems to do nothing in particular, some dlc have this as 1 so I uncomented this for now. Might be free stuff?
-		//pOwnershipInfo->field27_0x36 = 1;
-
-		g_config.addAdditionalAppId(appId);
-	}
-
-	//Doing that might be not worth it since this will most likely be easier to mantain
-	//TODO: Backtrace those 4 calls and only patch the really necessary ones since this might be prone to breakage
-	if (!denuvoOwner && g_config.disableFamilyLock && appIdOwnerOverride.count(appId) && appIdOwnerOverride.at(appId) < 4)
-	{
-		pOwnershipInfo->ownerSteamId = 1; //Setting to "arbitrary" steam Id instead of own, otherwise bypass won't work for own games
-		//Unnessecarry again, but whatever
-		pOwnershipInfo->permanent = true;
-		pOwnershipInfo->familyShared = false;
-
-		appIdOwnerOverride[appId]++;
-	}
-
-	//Returning false after we modify data shouldn't cause any problems because it should just get discarded
-
-	if (!g_pClientApps)
-		return ret;
-
-	auto type = g_pClientApps->getAppType(appId);
-	if (type == APPTYPE_DLC) //Don't touch DLC here, otherwise downloads might break. Hopefully this won't decrease compatibility
-	{
-		return ret;
-	}
-
-	if (g_config.automaticFilter)
-	{
-		switch(type)
-		{
-			case APPTYPE_APPLICATION:
-			case APPTYPE_GAME:
-				break;
-
-			default:
-				return ret;
-		}
-	}
-
-	return true;
+	return ret;
 }
 
 static uint8_t hkClientUser_IsUserSubscribedAppInTicket(void* pClientUser, uint32_t steamId, uint32_t a2, uint32_t a3, uint32_t appId)
@@ -462,11 +437,19 @@ static uint8_t hkClientUser_IsUserSubscribedAppInTicket(void* pClientUser, uint3
 	const uint8_t ticketState = Hooks::IClientUser_IsUserSubscribedAppInTicket.tramp.fn(pClientUser, steamId, a2, a3, appId);
 	//g_pLog->once("IClientUser::IsUserSubscribedAppInTicket(%p, %u, %u, %u, %u) -> %i\n", pClientUser, steamId, a2, a3, appId, ticketState);
 	//Don't log the steamId, protect users from themselves and stuff
-	g_pLog->once("IClientUser::IsUserSubscribedAppInTicket(%p, %u, %u, %u) -> %i\n", pClientUser, a2, a3, appId, ticketState);
+	g_pLog->once
+	(
+		"%s(%p, %u, %u, %u) -> %i\n",
+
+		Hooks::IClientUser_IsUserSubscribedAppInTicket.name.c_str(),
+		pClientUser,
+		a2,
+		a3,
+		appId,
+		ticketState
+	);
 	
-	//Might want to compare the steamId param to the g_currentSteamId in the future
-	//Although not doing that might also work for Dedicated servers?
-	if (!g_config.shouldExcludeAppId(appId))
+	if (DLC::userSubscribedInTicket(appId))
 	{
 		//Owned and subscribed hehe :)
 		return 0;
@@ -478,19 +461,19 @@ static uint8_t hkClientUser_IsUserSubscribedAppInTicket(void* pClientUser, uint3
 static uint32_t hkClientUser_GetSubscribedApps(void* pClientUser, uint32_t* pAppList, size_t size, bool a3)
 {
 	uint32_t count = Hooks::IClientUser_GetSubscribedApps.tramp.fn(pClientUser, pAppList, size, a3);
-	g_pLog->once("IClientUser::GetSubscribedApps(%p, %p, %i, %i) -> %i\n", pClientUser, pAppList, size, a3, count);
+	g_pLog->once
+	(
+		"%s(%p, %p, %i, %i) -> %i\n",
 
-	//Valve calls this function twice, once with size of 0 then again
-	if (!size || !pAppList)
-		return count + g_config.addedAppIds.size();
+		Hooks::IClientUser_GetSubscribedApps.name.c_str(),
+		pClientUser,
+		pAppList,
+		size,
+		a3,
+		count
+	);
 
-	//TODO: Maybe Add check if AppId already in list before blindly appending
-	for(auto& appId : g_config.addedAppIds)
-	{
-		pAppList[count++] = appId;
-	}
-
-	applistRequested = true;
+	Apps::getSubscribedApps(pAppList, size, count);
 
 	return count;
 }
@@ -498,9 +481,18 @@ static uint32_t hkClientUser_GetSubscribedApps(void* pClientUser, uint32_t* pApp
 static bool hkClientUser_RequiresLegacyCDKey(void* pClientUser, uint32_t appId, uint32_t* a2)
 {
 	const bool requiresKey = Hooks::IClientUser_RequiresLegacyCDKey.tramp.fn(pClientUser, appId, a2);
-	g_pLog->once("IClientUser::RequiresLegacyCDKey(%p, %u, %u) -> %i\n", pClientUser, appId, a2, requiresKey);
-		
-	if (requiresKey && g_config.isAddedAppId(appId))
+	g_pLog->once
+	(
+		"%s(%p, %u, %u) -> %i\n",
+
+		Hooks::IClientUser_RequiresLegacyCDKey.name.c_str(),
+		pClientUser,
+		appId,
+		a2,
+		requiresKey
+	);
+
+	if (Apps::shouldDisableCDKey(appId))
 	{
 		g_pLog->once("Disable CD Key for %u\n", appId);
 		return false;
