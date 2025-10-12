@@ -17,50 +17,41 @@ bool Apps::checkAppOwnership(uint32_t appId, CAppOwnershipInfo* pInfo)
 		return false;
 	}
 
+	uint32_t ownerOverride = g_currentSteamId;
 	const uint32_t denuvoOwner = g_config.getDenuvoGameOwner(appId);
+
 	//Do not modify Denuvo enabled Games
-	if (!g_config.denuvoSpoof && denuvoOwner && denuvoOwner != g_currentSteamId)
+	if (denuvoOwner && denuvoOwner != g_currentSteamId)
 	{
-		//Would love to log the SteamId, but for users anonymity I won't
-		g_pLog->once("Skipping %u because it's a Denuvo game from someone else\n", appId);
-		return false;
+		if (g_config.denuvoSpoof)
+		{
+			ownerOverride = denuvoOwner;
+		}
+		else
+		{
+			//Would love to log the SteamId, but for users anonymity I won't
+			g_pLog->once("Skipping %u because it's a Denuvo game from someone else\n", appId);
+			return false;
+		}
 	}
 
 	//Doing that might be not worth it since this will most likely be easier to mantain
 	//TODO: Backtrace those 4 calls and only patch the really necessary ones since this might be prone to breakage
 	if (g_config.disableFamilyLock && appIdOwnerOverride.count(appId) && appIdOwnerOverride.at(appId) < 4)
 	{
-		pInfo->ownerSteamId = 1; //Setting to "arbitrary" steam Id instead of own, otherwise bypass won't work for own games
-		//Unnessecarry again, but whatever
-		pInfo->permanent = true;
-		pInfo->familyShared = false;
-
+		ownerOverride = 1;
 		appIdOwnerOverride[appId]++;
-		return false;
 	}
 
-	if (g_config.shouldExcludeAppId(appId))
+	if (!g_config.shouldExcludeAppId(appId) && (g_config.isAddedAppId(appId) || (g_config.playNotOwnedGames && !pInfo->purchased)))
 	{
-		return false;
-	}
-
-	if (g_config.isAddedAppId(appId) || (g_config.playNotOwnedGames && !pInfo->purchased))
-	{
-		if (!denuvoOwner || denuvoOwner == g_currentSteamId)
-		{
-			//Changing the purchased field is enough, but just for nicety in the Steamclient UI we change the owner too
-			pInfo->ownerSteamId = g_currentSteamId;
-			pInfo->familyShared = false;
-		}
-		else if (denuvoOwner)
-		{
-			pInfo->ownerSteamId = denuvoOwner;
-			pInfo->familyShared = true;
-		}
+		//Changing the purchased field is enough, but just for nicety in the Steamclient UI we change the owner too
+		pInfo->ownerSteamId = ownerOverride;
+		pInfo->familyShared = ownerOverride != g_currentSteamId;
 
 		pInfo->purchased = true;
 		//Unnessecary but whatever
-		pInfo->permanent = true;
+		pInfo->permanent = !pInfo->familyShared;
 
 		//Found in backtrace
 		pInfo->releaseState = 4;
