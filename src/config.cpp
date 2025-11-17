@@ -27,6 +27,10 @@ static const char* defaultConfig =
 "#  SteamId:\n"
 "#    -  AppId1\n"
 "#    -  AppId2\n\n"
+"#Example of FakeAppIds:\n"
+"#FakeAppIds:\n"
+"#  AppId1: FakeAppId1\n"
+"#  AppId2: FakeAppId2\n\n"
 "#Disables Family Share license locking for self and others\n"
 "DisableFamilyShareLock: yes\n\n"
 "#Switches to whitelist instead of the default blacklist\n"
@@ -45,6 +49,9 @@ static const char* defaultConfig =
 "DlcData:\n\n"
 "#Fake Steam being offline for specified AppIds. Same format as AppIds\n"
 "FakeOffline: \n\n"
+"#Change AppIds of games to enable networking features\n"
+"#Use 0 as a key to set for all unowned Apps\n"
+"FakeAppIds:\n\n"
 "#Blocks games from unlocking on wrong accounts\n"
 "DenuvoGames:\n\n"
 "#Spoof Denuvo Games owner instead of blocking them\n"
@@ -179,71 +186,33 @@ bool CConfig::loadSettings()
 	g_pLog->info("DenuvoSpoof: %i\n", denuvoSpoof);
 	g_pLog->info("BlockEncryptedAppTickets: %i\n", blockEncryptedAppTickets);
 
-	//TODO: Create function to parse these kinda nodes, instead of c+p them
-	const auto appIdsNode = node["AppIds"];
-	if (appIdsNode)
-	{
-		for(auto& appIdNode : appIdsNode)
-		{
-			try
-			{
-				uint32_t appId = appIdNode.as<uint32_t>();
-				this->appIds.emplace(appId);
-				g_pLog->info("Added %u to AppIds\n", appId);
-			}
-			catch(...)
-			{
-				g_pLog->notify("Failed to parse %s in AppIds!", appIdNode.as<std::string>().c_str());
-			}
-		}
-	}
-	else
-	{
-		g_pLog->notify("Missing AppIds entry in config!");
-	}
+	appIds = getList<uint32_t>(node, "AppIds");
+	addedAppIds = getList<uint32_t>(node, "AdditionalApps");
+	fakeOffline = getList<uint32_t>(node, "FakeOffline");
 
-	const auto additionalAppsNode = node["AdditionalApps"];
-	if (additionalAppsNode)
+	const auto fakeAppIdsNode = node["FakeAppIds"];
+	if (fakeAppIdsNode)
 	{
-		for(auto& appIdNode : additionalAppsNode)
+		for (const auto& node : fakeAppIdsNode)
 		{
 			try
 			{
-				uint32_t appId = appIdNode.as<uint32_t>();
-				this->addedAppIds.emplace(appId);
-				g_pLog->info("Added %u to AdditionalApps\n", appId);
-			}
-			catch(...)
-			{
-				g_pLog->notify("Failed to parse %s in AdditionalApps!", appIdNode.as<std::string>().c_str());
-			}
-		}
-	}
-	else
-	{
-		g_pLog->notify("Missing AdditionalApps entry in config!");
-	}
+				uint32_t k = node.first.as<uint32_t>();
+				uint32_t v = node.second.as<uint32_t>();
+				fakeAppIds[k] = v;
 
-	const auto fakeOfflineNode = node["FakeOffline"];
-	if (fakeOfflineNode )
-	{
-		for(auto& appIdNode : fakeOfflineNode)
-		{
-			try
-			{
-				uint32_t appId = appIdNode.as<uint32_t>();
-				this->fakeOffline.emplace(appId);
-				g_pLog->info("Added %u to FakeOffline\n", appId);
+				g_pLog->debug("Added %u : %u to FakeAppIds\n", k, v);
 			}
 			catch(...)
 			{
-				g_pLog->notify("Failed to parse %s in FakeOffline!", appIdNode.as<std::string>().c_str());
+				g_pLog->warn("Failed to parse FakeAppIds!");
+				break;
 			}
 		}
 	}
 	else
 	{
-		g_pLog->notify("Missing FakeOffline entry in config!");
+		g_pLog->warn("Missing FakeAppIds entry in config!");
 	}
 
 	const auto dlcDataNode = node["DlcData"];

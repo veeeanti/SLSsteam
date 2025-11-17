@@ -1,58 +1,92 @@
 #pragma once
 
+#include "memhlp.hpp"
+
 #include "libmem/libmem.h"
+
+#include <string>
+#include <vector>
+
+
+struct Pattern_t
+{
+public:
+	const std::string name;
+	const std::string pattern;
+	const MemHlp::SigFollowMode followMode;
+	std::vector<uint8_t> prologue;
+
+	lm_address_t address;
+
+	Pattern_t(const char* name, const char* pattern, MemHlp::SigFollowMode followMode);
+	Pattern_t(const char* name, const char* pattern, MemHlp::SigFollowMode followMode, std::vector<uint8_t> prologue);
+	//~CPattern();
+
+	bool find();
+};
 
 namespace Patterns
 {
-	//Relative
-	constexpr lm_string_t LogSteamPipeCall = "E8 ? ? ? ? 83 C4 10 85 FF 74 ? 8B 07 83 EC 04 FF B5 ? ? ? ? FF B5 ? ? ? ? 57 FF 10 83 C4 10 8D 45 ? 83 EC 04 89 F3 6A 04 50 FF 75";
-	//Relative
-	constexpr lm_string_t CheckAppOwnership = "E8 ? ? ? ? 88 45 ? 83 C4 10 84 C0 0F 84 ? ? ? ? 8B 45 ? 80 7D ? 00";
+	extern Pattern_t FamilyGroupRunningApp;
+	extern Pattern_t StopPlayingBorrowedApp;
 
-	//Relative
-	constexpr lm_string_t FamilyGroupRunningApp = "E8 ? ? ? ? 83 C4 10 83 EC 08 C7 46 ? 01 00 00 00 C6 46 ? 01 56 57 E8 ? ? ? ? 83 C4 1C B8 01 00 00 00 5B 5E 5F 5D C3 ? ? ? ? ? ? ? 83 EC 04";
+	extern Pattern_t LogSteamPipeCall;
+	extern Pattern_t ParseProtoBufResponse;
 
-	//Mid function
-	constexpr lm_string_t StopPlayingBorrowedApp = "8B 40 ? 83 EC 0C 89 F3 8B 95";
+	namespace CAPIJob
+	{
+		extern Pattern_t RequestUserStats;
+	}
 
-	//Mid function
-	constexpr lm_string_t IClientAppManager_PipeLoop = "FF B5 ? ? ? ? FF B5 ? ? ? ? FF B5 ? ? ? ? E8 ? ? ? ? 83 C4 20 E9 ? ? ? ? E8 ? ? ? ? 8D 8E ? ? ? ? 83 EC 08 66 0F 6E C0 66 0F 6E CA 89 8D ? ? ? ? 8D 86 ? ? ? ? 66 0F 62 C1 66 0F 7E 85 ? ? ? ? 66 0F 73 D0 20 50 51 66 0F 7E 85 ? ? ? ? 89 85 ? ? ? ? E8 ? ? ? ? 83 C4 10 85 FF 74 ? 8B 07 83 EC 04 FF B5 ? ? ? ? FF B5 ? ? ? ? 57 FF 10 83 C4 10 8D 85 ? ? ? ? 83 EC 04 89 F3 6A 04 50 FF B5 ? ? ? ? E8 ? ? ? ? 8D 86 ? ? ? ? 83 C4 10 8B 38";
-	//Mid function
-	constexpr lm_string_t IClientApps_PipeLoop = "FF B5 ? ? ? ? FF B5 ? ? ? ? FF B5 ? ? ? ? E8 ? ? ? ? 83 C4 20 E9 ? ? ? ? ? ? ? ? ? ? 8B 85 ? ? ? ? 83 EC 04 FF 70 ? 8B 85 ? ? ? ? FF 70 ? 8D 86 ? ? ? ? FF 30 FF B5 ? ? ? ? FF B5 ? ? ? ? FF B5 ? ? ? ? FF B5 ? ? ? ? E8 ? ? ? ? 83 C4 20 E9 ? ? ? ? ? ? ? ? ? ? 8B 85 ? ? ? ? 83 EC 04 FF 70 ? 8B 85 ? ? ? ? FF 70 ? 8D 86 ? ? ? ? FF 30 FF B5 ? ? ? ? FF B5 ? ? ? ? FF B5 ? ? ? ? FF B5 ? ? ? ? E8 ? ? ? ? 83 C4 20 E9 ? ? ? ? ? ? ? ? ? ? 8B 85 ? ? ? ? 83 EC 04 FF 70 ? 8B 85 ? ? ? ? FF 70 ? 8D 86 ? ? ? ? FF 30 FF B5 ? ? ? ? FF B5 ? ? ? ? FF B5 ? ? ? ? FF B5 ? ? ? ? E8 ? ? ? ? 83 C4 20 E9 ? ? ? ? ? ? ? ? ? ? 8B 85 ? ? ? ? 83 EC 04 FF 70 ? 8B 85 ? ? ? ? FF 70 ? 8D 86 ? ? ? ? FF 30 FF B5 ? ? ? ? FF B5 ? ? ? ? FF B5 ? ? ? ? FF B5 ? ? ? ? E8 ? ? ? ? 83 C4 20 E9 ? ? ? ? ? ? ? ? ? ? 8B 85 ? ? ? ? 83 EC 04";
-	//Mid function
-	constexpr lm_string_t IClientRemoteStorage_PipeLoop = "8D 8E ? ? ? ? 83 EC 08 66 0F 6E C0 66 0F 6E CA 89 8D ? ? ? ? 8D 86 ? ? ? ? 66 0F 62 C1 66 0F 7E 85 ? ? ? ? 66 0F 73 D0 20 50 51 66 0F 7E 85 ? ? ? ? 89 85 ? ? ? ? E8 ? ? ? ? 83 C4 10 85 FF 74 ? 8B 07 83 EC 04 FF B5 ? ? ? ? FF B5 ? ? ? ? 57 FF 10 83 C4 10 8D 85 ? ? ? ? 83 EC 04 89 F3 6A 08 50 FF B5 ? ? ? ? E8 ? ? ? ? 8D 86 ? ? ? ? 83 C4 10 8B 18 85 DB";
-	//Mid function
-	constexpr lm_string_t IClientUtils_PipeLoop = "83 EC 08 89 F3 50 57 E8 ? ? ? ? 58 FF B5 ? ? ? ? E8 ? ? ? ? 58 8D 45";
-	//Mid function
-	constexpr lm_string_t IClientUser_PipeLoop = "66 0F 62 C1 66 0F 7E 85 ? ? ? ? 66 0F 73 D0 20 50 51 66 0F 7E 85 ? ? ? ? 89 85 ? ? ? ? E8 ? ? ? ? 83 C4 10 85 FF 74 ? 8B 07 83 EC 04 FF B5 ? ? ? ? FF B5 ? ? ? ? 57 FF 10 83 C4 10 8D 85 ? ? ? ? 83 EC 04 89 F3 C7 85 ? ? ? ? 00 00 00 00 6A 04 50 FF B5 ? ? ? ? E8 ? ? ? ? 8B 85 ? ? ? ? 83 C4 10 05 ? ? ? ? 3B 85 ? ? ? ? 74 ? 83 EC 0C FF B5 ? ? ? ? 8D 86 ? ? ? ? FF B5 ? ? ? ? 50 8D 86 ? ? ? ? 68 4E 01 00 00";
+	namespace CSteamEngine
+	{
+		extern Pattern_t GetAPICallResult;
+		extern Pattern_t SetAppIdForCurrentPipe;
+	}
 
-	//Relative
-	constexpr lm_string_t GetSubscribedApps = "E8 ? ? ? ? 89 C6 83 C4 10 85 C0 0F 84 ? ? ? ? 8B 9D ? ? ? ? 39 D8";
-	//Relative
-	constexpr lm_string_t IsUserSubscribedAppInTicket = "E8 ? ? ? ? 89 C3 83 C4 20 8B ? ? ? ? ? 8B";
-	//Relative
-	constexpr lm_string_t IsSubscribedApp = "E8 ? ? ? ? 83 C4 10 84 C0 74 ? 8B 95 ? ? ? ? 83 EC 04";
-	//End of function
-	constexpr lm_string_t RequiresLegacyCDKey = "C3 ? ? ? ? ? 8B 44 24 ? 83 C4 1C 89 F9 89 F2 5B 5E 5F 5D 2D 94 18 00 00";
-	//Relative, not unique. All matches point to correct function though
-	constexpr lm_string_t GetSteamId = "E8 ? ? ? ? 89 D8 83 C4 0C 83 C4 08 5B C2 04 00 ? 83 EC 08 50 53 FF D2 89 D8 83 C4 0C 83 C4 08 5B C2 04 00";
-	//Mid function
-	constexpr lm_string_t GetAppOwnershipTicketExtendedData = "83 EC 24 FF 74 24 ? 8B 44 24";
+	namespace CUser
+	{
+		//TODO: Order & Convert old patterns
+		extern Pattern_t CheckAppOwnership;
+		extern Pattern_t GetEncryptedAppTicket;
+		extern Pattern_t GetSubscribedApps;
+		extern Pattern_t UpdateAppOwnershipTicket;
+	}
 
-	//Relative
-	constexpr lm_string_t CAPIJob_RequestUserStats = "E8 ? ? ? ? 59 5E 50 89 C7";
+	namespace IClientAppManager
+	{
+		extern Pattern_t PipeLoop;
+	}
 
-	//Relative
-	constexpr lm_string_t GetAPICallResult = "E8 ? ? ? ? 83 C4 20 84 C0 75 ? 8B 86 ? ? ? ? 83 C0 0F";
-	//Mid Function
-	constexpr lm_string_t GetEncryptedAppTicket = "8D 7A ? 83 EC 0C 57 E8 ? ? ? ? 83 C4 10";
+	namespace IClientApps
+	{
+		extern Pattern_t PipeLoop;
+	}
 
-	//Relative
-	constexpr lm_string_t BLoggedOn = "E9 ? ? ? ? ? ? ? ? ? ? 5B 5E 5F FF E0";
+	namespace IClientRemoteStorage
+	{
+		extern Pattern_t PipeLoop;
+	}
 
-	//Relative
-	constexpr lm_string_t ParseProtoBufResponse = "E8 ? ? ? ? 58 8B 45 ? 8B 8D";
+	namespace IClientUser
+	{
+		extern Pattern_t PipeLoop;
 
-	//Mid function
-	constexpr lm_string_t BUpdateAppOwnershipInfo = "83 EC 0C 89 F3 8B 7D ? FF 30 E8 ? ? ? ? 83 C4 10 83 FF 01 77 ? 84 C0 75 ? 80 7D ? 00 74 ? 80 7D ? 00 0F 84 ? ? ? ? 8D 65";
+		extern Pattern_t BIsSubscribedApp;
+		extern Pattern_t BLoggedOn;
+		extern Pattern_t BUpdateAppOwnershipTicket;
+		extern Pattern_t GetAppOwnershipTicketExtendedData;
+		extern Pattern_t GetSteamId;
+		extern Pattern_t IsUserSubscribedAppInTicket;
+		extern Pattern_t RequiresLegacyCDKey;
+	}
+
+	namespace IClientUtils
+	{
+		extern Pattern_t PipeLoop;
+	}
+
+
+	extern std::vector<Pattern_t*> patterns;
+	bool init();
 }

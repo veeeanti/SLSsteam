@@ -24,6 +24,7 @@ namespace Ticket
 	bool saveTicketToCache(uint32_t appId, void* ticketData, uint32_t ticketSize);
 
 	void recvAppOwnershipTicketResponse(CMsgAppOwnershipTicketResponse* resp);
+	void launchApp(uint32_t appId);
 	void getTicketOwnershipExtendedData(uint32_t appId);
 
 
