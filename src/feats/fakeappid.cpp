@@ -18,9 +18,9 @@ void FakeAppIds::setAppIdForCurrentPipe(uint32_t& appId)
 		g_pLog->once("Changing AppId of %u\n", appId);
 		appId = g_config.fakeAppIds[appId];
 	}
-	//else if (g_config.fakeAppIds.contains(0) && !g_pClientUser->isSubscribed(appId))
-	//{
-	//	g_pLog->once("Changing AppId of %u to default override\n", appId);
-	//	appId = g_config.fakeAppIds[0];
-	//}
+	else if (g_config.fakeAppIds.contains(0) && g_config.isAddedAppId(appId))//!g_pClientUser->isSubscribed(appId))
+	{
+		g_pLog->once("Changing AppId of %u to default override\n", appId);
+		appId = g_config.fakeAppIds[0];
+	}
 }
