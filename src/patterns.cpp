@@ -86,9 +86,15 @@ namespace Patterns
 
 	namespace CSteamEngine
 	{
+		Pattern_t Init
+		{
+			"CSteamEngine::Init",
+			"E8 ? ? ? ? 83 C4 10 8D 83 ? ? ? ? 83 EC 0C 89 AB",
+			SigFollowMode::Relative
+		};
 		Pattern_t GetAPICallResult
 		{
-			"IClientUser::GetAPICallResult",
+			"CSteamEngine::GetAPICallResult",
 			"E8 ? ? ? ? 83 C4 20 84 C0 75 ? 8B 86 ? ? ? ? 83 C0 0F",
 			SigFollowMode::Relative
 		};
@@ -217,6 +223,28 @@ namespace Patterns
 			"C3 ? ? ? ? ? 8B 44 24 ? 83 C4 1C 89 F9 89 F2 5B 5E 5F 5D 2D 94 18 00 00",
 			SigFollowMode::PrologueUpwards,
 			std::vector<uint8_t> { 0x53, 0x56, 0x57, 0x55 }
+		};
+	}
+
+	namespace IClientUGC
+	{
+		Pattern_t PipeLoop
+		{
+			"IClientUGC::PipeLoop",
+			"66 0F 62 C1 66 0F 7E 85 ? ? ? ? 66 0F 73 D0 20 50 51 66 0F 7E 85 ? ? ? ? 89 85 ? ? ? ? E8 ? ? ? ? 83 C4 10 85 FF 74 ? 8B 07 83 EC 04 FF B5 ? ? ? ? FF B5 ? ? ? ? 57 FF 10 83 C4 10 8D 85 ? ? ? ? 83 EC 04 89 F3 6A 08 50 FF B5 ? ? ? ? E8 ? ? ? ? 8D 86 ? ? ? ? 83 C4 10 8B 38 89 85 ? ? ? ? 85 FF 74 ? 8D 86 ? ? ? ? 83 EC 0C FF B5 ? ? ? ? 8D BD ? ? ? ? FF B5 ? ? ? ? 50 6A 20 57 E8 ? ? ? ? 83 C4 14 57 E8 ? ? ? ? 83 C4 10 8D 85 ? ? ? ? 83 EC 04 89 F3 6A 01 50 FF B5 ? ? ? ? E8 ? ? ? ? 8B 85 ? ? ? ? 83 C4 10 8B 08 85 C9 74 ? 0F B6 85 ? ? ? ? E8 ? ? ? ? 8D 85 ? ? ? ? 83 EC 04 89 F3 C7 85 ? ? ? ? 00 00 00 00 6A 04 50 FF B5 ? ? ? ? E8 ? ? ? ? 8B 85 ? ? ? ? 83 C4 10 05 52 2F 4B 04",
+			SigFollowMode::PrologueUpwards,
+			std::vector<uint8_t> { 0x56, 0x57, 0xe5, 0x89, 0x55 }
+		};
+	}
+
+	namespace IClientUserStats
+	{
+		Pattern_t PipeLoop
+		{
+			"IClientUserStats",
+			"50 6A 20 57 E8 ? ? ? ? 89 3C 24 E8 ? ? ? ? 8B 85 ? ? ? ? 83 C4 10 83 EC 08 89 F3 50 FF B5 ? ? ? ? E8 ? ? ? ? 8B 45 ? 83 C4 0C 6A 04 C7 85 ? ? ? ? 00 00 00 00 89 85 ? ? ? ? 8D 85 ? ? ? ? 50 FF B5 ? ? ? ? E8 ? ? ? ? 8B 85 ? ? ? ? 83 C4 10 05 95 F1 FB 02",
+			SigFollowMode::PrologueUpwards,
+			std::vector<uint8_t> { 0x56, 0x57, 0xe5, 0x89, 0x55 }
 		};
 	}
 

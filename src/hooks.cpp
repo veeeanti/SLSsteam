@@ -5,6 +5,7 @@
 #include "log.hpp"
 #include "memhlp.hpp"
 #include "patterns.hpp"
+#include "sdk/CSteamEngine.hpp"
 #include "vftableinfo.hpp"
 
 #include "sdk/CAppOwnershipInfo.hpp"
@@ -211,6 +212,14 @@ static uint32_t hkCAPIJob_RequestUserStats(void* a0)
 	}
 
 	return ret;
+}
+
+static void hkSteamEngine_Init(void* pSteamEngine)
+{
+	Hooks::CSteamEngine_Init.tramp.fn(pSteamEngine);
+
+	g_pSteamEngine = reinterpret_cast<CSteamEngine*>(pSteamEngine);
+	g_pLog->once("g_pSteamEngine at %p\n", pSteamEngine);
 }
 
 __attribute__((hot))
@@ -537,16 +546,33 @@ static bool hkClientRemoteStorage_IsCloudEnabledForApp(void* pClientRemoteStorag
 
 static void hkClientRemoteStorage_PipeLoop(void* pClientRemoteStorage, void* a1, void* a2, void* a3)
 {
-	std::shared_ptr<lm_vmt_t> vft = std::make_shared<lm_vmt_t>();
-	LM_VmtNew(*reinterpret_cast<lm_address_t**>(pClientRemoteStorage), vft.get());
 
-	Hooks::IClientRemoteStorage_IsCloudEnabledForApp.setup(vft, VFTIndexes::IClientRemoteStorage::IsCloudEnabledForApp, hkClientRemoteStorage_IsCloudEnabledForApp);
-	Hooks::IClientRemoteStorage_IsCloudEnabledForApp.place();
+	static bool hooked = false;
+	if (!hooked)
+	{
+		std::shared_ptr<lm_vmt_t> vft = std::make_shared<lm_vmt_t>();
+		LM_VmtNew(*reinterpret_cast<lm_address_t**>(pClientRemoteStorage), vft.get());
 
-	g_pLog->debug("IClientRemoteStorage->vft at %p\n", vft->vtable);
+		Hooks::IClientRemoteStorage_IsCloudEnabledForApp.setup(vft, VFTIndexes::IClientRemoteStorage::IsCloudEnabledForApp, hkClientRemoteStorage_IsCloudEnabledForApp);
+		Hooks::IClientRemoteStorage_IsCloudEnabledForApp.place();
 
-	Hooks::IClientRemoteStorage_PipeLoop.remove();
-	Hooks::IClientRemoteStorage_PipeLoop.originalFn.fn(pClientRemoteStorage, a1, a2, a3);
+		g_pLog->debug("IClientRemoteStorage->vft at %p\n", vft->vtable);
+
+		hooked = true;
+	}
+	
+	FakeAppIds::pipeLoop(false);
+	Hooks::IClientRemoteStorage_PipeLoop.tramp.fn(pClientRemoteStorage, a1, a2, a3);
+	FakeAppIds::pipeLoop(true);
+}
+
+static void hkClientUGC_PipeLoop(void* pClientUGC, void* a1, void* a2, void* a3)
+{
+	FakeAppIds::pipeLoop(false);
+	Hooks::IClientUGC_PipeLoop.tramp.fn(pClientUGC, a1, a2, a3);
+	FakeAppIds::pipeLoop(true);
+
+	g_pLog->debug("IClientUGC::PipeLoop in %u for %u\n", *g_pClientUtils->getPipeIndex(), g_pClientUtils->getAppId());
 }
 
 static bool hkClientUtils_GetOfflineMode(void* pClientUtils)
@@ -752,8 +778,19 @@ static void hkClientUser_PipeLoop(void* pClientUser, void* a1, void* a2, void* a
 
 	//g_pLog->debug("IClientUser->vft at %p\n", vft->vtable);
 
-	Hooks::IClientUser_PipeLoop.remove();
-	Hooks::IClientUser_PipeLoop.originalFn.fn(pClientUser, a1, a2, a3);
+	//Hooks::IClientUser_PipeLoop.remove();
+	//Hooks::IClientUser_PipeLoop.originalFn.fn(pClientUser, a1, a2, a3);
+	
+	//FakeAppIds::pipeLoop(false);
+	Hooks::IClientUser_PipeLoop.tramp.fn(pClientUser, a1, a2, a3);
+	//FakeAppIds::pipeLoop(true);
+}
+
+static void hkClientUserStats_PipeLoop(void* pClientUserStats, void* a1, void* a2, void* a3)
+{
+	FakeAppIds::pipeLoop(false);
+	Hooks::IClientUserStats_PipeLoop.tramp.fn(pClientUserStats, a1, a2, a3);
+	FakeAppIds::pipeLoop(true);
 }
 
 static void patchRetn(lm_address_t address)
@@ -877,15 +914,19 @@ static bool createAndPlaceSteamIdHook()
 
 namespace Hooks
 {
+	//TODO: Lazily intialize in a different way, or preload glibc
 	DetourHook<LogSteamPipeCall_t> LogSteamPipeCall;
 	DetourHook<ParseProtoBufResponse_t> ParseProtoBufResponse;
 
 	DetourHook<IClientAppManager_PipeLoop_t> IClientAppManager_PipeLoop;
 	DetourHook<IClientApps_PipeLoop_t> IClientApps_PipeLoop;
 	DetourHook<IClientRemoteStorage_PipeLoop_t> IClientRemoteStorage_PipeLoop;
+	DetourHook<IClientUGC_PipeLoop_t> IClientUGC_PipeLoop;
 	DetourHook<IClientUtils_PipeLoop_t> IClientUtils_PipeLoop;
 	DetourHook<IClientUser_PipeLoop_t> IClientUser_PipeLoop;
+	DetourHook<IClientUserStats_PipeLoop_t> IClientUserStats_PipeLoop;
 
+	DetourHook<CSteamEngine_Init_t> CSteamEngine_Init;
 	DetourHook<CSteamEngine_GetAPICallResult_t> CSteamEngine_GetAPICallResult;
 	DetourHook<CSteamEngine_SetAppIdForCurrentPipe_t> CSteamEngine_SetAppIdForCurrentPipe;
 
@@ -933,14 +974,17 @@ bool Hooks::setup()
 		&& CUser_GetSubscribedApps.setup(Patterns::CUser::GetSubscribedApps, &hkUser_GetSubscribedApps)
 		&& CUser_GetEncryptedAppTicket.setup(Patterns::CUser::GetEncryptedAppTicket, hkUser_GetEncryptedAppTicket)
 
+		&& CSteamEngine_Init.setup(Patterns::CSteamEngine::Init, &hkSteamEngine_Init)
 		&& CSteamEngine_GetAPICallResult.setup(Patterns::CSteamEngine::GetAPICallResult, &hkSteamEngine_GetAPICallResult)
 		&& CSteamEngine_SetAppIdForCurrentPipe.setup(Patterns::CSteamEngine::SetAppIdForCurrentPipe, &hkSteamEngine_SetAppIdForCurrentPipe)
 
 		&& IClientApps_PipeLoop.setup(Patterns::IClientApps::PipeLoop, hkClientApps_PipeLoop)
 		&& IClientAppManager_PipeLoop.setup(Patterns::IClientAppManager::PipeLoop, hkClientAppManager_PipeLoop)
 		&& IClientRemoteStorage_PipeLoop.setup(Patterns::IClientRemoteStorage::PipeLoop, hkClientRemoteStorage_PipeLoop)
+		&& IClientUGC_PipeLoop.setup(Patterns::IClientUGC::PipeLoop, hkClientUGC_PipeLoop)
 		&& IClientUtils_PipeLoop.setup(Patterns::IClientUtils::PipeLoop, hkClientUtils_PipeLoop)
 		&& IClientUser_PipeLoop.setup(Patterns::IClientUser::PipeLoop, hkClientUser_PipeLoop)
+		&& IClientUserStats_PipeLoop.setup(Patterns::IClientUserStats::PipeLoop, hkClientUserStats_PipeLoop)
 
 		&& IClientUser_BIsSubscribedApp.setup(Patterns::IClientUser::BIsSubscribedApp, &hkClientUser_BIsSubscribedApp)
 		&& IClientUser_BLoggedOn.setup(Patterns::IClientUser::BLoggedOn, &hkClientUser_BLoggedOn)
@@ -968,6 +1012,7 @@ void Hooks::place()
 
 	CAPIJob_RequestUserStats.place();
 
+	CSteamEngine_Init.place();
 	CSteamEngine_GetAPICallResult.place();
 	CSteamEngine_SetAppIdForCurrentPipe.place();
 
@@ -979,7 +1024,9 @@ void Hooks::place()
 	IClientAppManager_PipeLoop.place();
 	IClientRemoteStorage_PipeLoop.place();
 	IClientUtils_PipeLoop.place();
+	IClientUGC_PipeLoop.place();
 	IClientUser_PipeLoop.place();
+	IClientUserStats_PipeLoop.place();
 
 	IClientUser_BIsSubscribedApp.place();
 	IClientUser_BLoggedOn.place();
@@ -999,6 +1046,7 @@ void Hooks::remove()
 
 	CAPIJob_RequestUserStats.remove();
 
+	CSteamEngine_Init.remove();
 	CSteamEngine_GetAPICallResult.remove();
 	CSteamEngine_SetAppIdForCurrentPipe.remove();
 
@@ -1010,7 +1058,9 @@ void Hooks::remove()
 	IClientAppManager_PipeLoop.remove();
 	IClientRemoteStorage_PipeLoop.remove();
 	IClientUtils_PipeLoop.remove();
+	IClientUGC_PipeLoop.remove();
 	IClientUser_PipeLoop.remove();
+	IClientUserStats_PipeLoop.remove();
 
 	IClientUser_BIsSubscribedApp.remove();
 	IClientUser_BLoggedOn.remove();

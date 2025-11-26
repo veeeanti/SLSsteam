@@ -40,6 +40,7 @@ namespace Patterns
 
 	namespace CSteamEngine
 	{
+		extern Pattern_t Init;
 		extern Pattern_t GetAPICallResult;
 		extern Pattern_t SetAppIdForCurrentPipe;
 	}
@@ -68,6 +69,11 @@ namespace Patterns
 		extern Pattern_t PipeLoop;
 	}
 
+	namespace IClientUGC
+	{
+		extern Pattern_t PipeLoop;
+	}
+
 	namespace IClientUser
 	{
 		extern Pattern_t PipeLoop;
@@ -79,6 +85,11 @@ namespace Patterns
 		extern Pattern_t GetSteamId;
 		extern Pattern_t IsUserSubscribedAppInTicket;
 		extern Pattern_t RequiresLegacyCDKey;
+	}
+
+	namespace IClientUserStats
+	{
+		extern Pattern_t PipeLoop;
 	}
 
 	namespace IClientUtils

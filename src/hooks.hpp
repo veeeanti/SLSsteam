@@ -73,11 +73,14 @@ namespace Hooks
 	typedef void(*IClientAppManager_PipeLoop_t)(void*, void*, void*, void*);
 	typedef void(*IClientApps_PipeLoop_t)(void*, void*, void*, void*);
 	typedef void(*IClientRemoteStorage_PipeLoop_t)(void*, void*, void*, void*);
+	typedef void(*IClientUGC_PipeLoop_t)(void*, void*, void*, void*);
 	typedef void(*IClientUtils_PipeLoop_t)(void*, void*, void*, void*);
 	typedef void(*IClientUser_PipeLoop_t)(void*, void*, void*, void*);
+	typedef void(*IClientUserStats_PipeLoop_t)(void*, void*, void*, void*);
 
 	typedef uint32_t(*CAPIJob_RequestUserStats_t)(void*);
 
+	typedef void(*CSteamEngine_Init_t)(void*);
 	typedef bool(*CSteamEngine_GetAPICallResult_t)(void*, uint32_t, uint32_t, void*, uint32_t, uint32_t, bool*);
 	typedef bool(*CSteamEngine_SetAppIdForCurrentPipe_t)(void*, uint32_t, bool);
 
@@ -100,11 +103,14 @@ namespace Hooks
 	extern DetourHook<IClientAppManager_PipeLoop_t> IClientAppManager_PipeLoop;
 	extern DetourHook<IClientApps_PipeLoop_t> IClientApps_PipeLoop;
 	extern DetourHook<IClientRemoteStorage_PipeLoop_t> IClientRemoteStorage_PipeLoop;
+	extern DetourHook<IClientUGC_PipeLoop_t> IClientUGC_PipeLoop;
 	extern DetourHook<IClientUtils_PipeLoop_t> IClientUtils_PipeLoop;
 	extern DetourHook<IClientUser_PipeLoop_t> IClientUser_PipeLoop;
+	extern DetourHook<IClientUserStats_PipeLoop_t> IClientUserStats_PipeLoop;
 
 	extern DetourHook<CAPIJob_RequestUserStats_t> CAPIJob_RequestUserStats;
 
+	extern DetourHook<CSteamEngine_Init_t> CSteamEngine_Init;
 	extern DetourHook<CSteamEngine_GetAPICallResult_t> CSteamEngine_GetAPICallResult;
 	extern DetourHook<CSteamEngine_SetAppIdForCurrentPipe_t> CSteamEngine_SetAppIdForCurrentPipe;
 
