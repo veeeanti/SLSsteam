@@ -1,5 +1,6 @@
 #include "apps.hpp"
 
+#include "../sdk/CUser.hpp"
 #include "../sdk/IClientApps.hpp"
 
 #include "../config.hpp"
@@ -117,15 +118,16 @@ void Apps::launchApp(uint32_t appId)
 
 bool Apps::shouldDisableCloud(uint32_t appId)
 {
-	return g_config.isAddedAppId(appId);
+	return g_pUser->checkAppOwnership(appId);
 }
 
 bool Apps::shouldDisableCDKey(uint32_t appId)
 {
-	return g_config.isAddedAppId(appId);
+	return g_pUser->checkAppOwnership(appId);
 }
 
 bool Apps::shouldDisableUpdates(uint32_t appId)
 {
+	//Using AdditionalApps here so users can manually block updates
 	return g_config.isAddedAppId(appId);
 }

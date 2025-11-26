@@ -1,5 +1,6 @@
 #include "dlc.hpp"
 
+#include "../sdk/CUser.hpp"
 #include "../sdk/IClientUtils.hpp"
 
 #include "../config.hpp"
@@ -16,15 +17,18 @@ bool DLC::shouldUnlockDlc(uint32_t appId)
 	{
 		return false;
 	}
+
+	if (!g_pUser->checkAppOwnership(appId))
+	{
+		return false;
+	}
 	
 	return true;
 }
 
 bool DLC::isDlcEnabled(uint32_t appId)
 {
-	//This isn't the best way to verify legit ownership, but it seems to fit
-	//the rest of my design choices better than any other solution I can think off
-	return g_config.isAddedAppId(appId) && shouldUnlockDlc(appId);
+	return shouldUnlockDlc(appId);
 }
 
 bool DLC::isSubscribed(uint32_t appId)

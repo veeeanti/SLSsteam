@@ -1,8 +1,21 @@
 #include "CUser.hpp"
 
+#include "../hooks.hpp"
 #include "../patterns.hpp"
+#include "CAppOwnershipInfo.hpp"
 
 CUser* g_pUser = nullptr;
+
+bool CUser::checkAppOwnership(uint32_t appId, CAppOwnershipInfo* pInfo)
+{
+	return Hooks::CUser_CheckAppOwnership.tramp.fn(this, appId, pInfo);
+}
+
+bool CUser::checkAppOwnership(uint32_t appId)
+{
+	CAppOwnershipInfo info {};
+	return checkAppOwnership(appId, &info);
+}
 
 void CUser::updateAppOwnershipTicket(uint32_t appId, void* pTicket, uint32_t len)
 {
