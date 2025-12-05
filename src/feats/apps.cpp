@@ -38,13 +38,18 @@ bool Apps::checkAppOwnership(uint32_t appId, CAppOwnershipInfo* pInfo)
 
 	//Doing that might be not worth it since this will most likely be easier to mantain
 	//TODO: Backtrace those 4 calls and only patch the really necessary ones since this might be prone to breakage
-	if (g_config.disableFamilyLock && appIdOwnerOverride.count(appId) && appIdOwnerOverride.at(appId) < 4)
+	if (g_config.disableFamilyLock && appIdOwnerOverride.contains(appId) && appIdOwnerOverride.at(appId) < 4)
 	{
 		ownerOverride = 1;
 		appIdOwnerOverride[appId]++;
 	}
 
-	if (!g_config.shouldExcludeAppId(appId) && (g_config.isAddedAppId(appId) || (g_config.playNotOwnedGames && !pInfo->purchased)))
+	if (!g_config.shouldExcludeAppId(appId) &&
+	(
+		g_config.isAddedAppId(appId)
+		|| (g_config.playNotOwnedGames && !pInfo->purchased)
+		|| ownerOverride != pInfo->ownerSteamId
+	))
 	{
 		//Changing the purchased field is enough, but just for nicety in the Steamclient UI we change the owner too
 		pInfo->ownerSteamId = ownerOverride;
