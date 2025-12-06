@@ -33,11 +33,6 @@ namespace Patterns
 	extern Pattern_t LogSteamPipeCall;
 	extern Pattern_t ParseProtoBufResponse;
 
-	namespace CAPIJob
-	{
-		extern Pattern_t RequestUserStats;
-	}
-
 	namespace CSteamEngine
 	{
 		extern Pattern_t Init;

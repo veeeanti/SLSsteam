@@ -74,16 +74,6 @@ namespace Patterns
 		SigFollowMode::Relative
 	};
 
-	namespace CAPIJob
-	{
-		Pattern_t RequestUserStats
-		{
-			"CAPIJobRequestUserStats",
-			"E8 ? ? ? ? 59 5E 50 89 C7",
-			SigFollowMode::Relative
-		};
-	}
-
 	namespace CSteamEngine
 	{
 		Pattern_t Init
