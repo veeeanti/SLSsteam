@@ -35,7 +35,7 @@ bin/SLSsteam.so: $(objs) $(libs)
 -include $(deps)
 obj/%.o : src/%.cpp
 	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -Iinclude -MMD -MP -c $< -o $@
+	$(CXX) $(CXXFLAGS) -isysteminclude -MMD -MP -c $< -o $@
 
 clean:
 	rm -rvf "obj/" "bin/" "zips/"
