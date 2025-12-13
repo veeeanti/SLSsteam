@@ -13,6 +13,9 @@
 #include <unordered_map>
 #include <unordered_set>
 
+
+class CFileWatcher;
+
 class CConfig {
 public:
 	struct FakeGame_t
@@ -52,6 +55,11 @@ public:
 	bool notifyInit;
 	unsigned int logLevel;
 	bool extendedLogging;
+
+	//Using incomplete class to avoid runtime linking errors
+	CFileWatcher* watcher;
+
+	~CConfig();
 
 	std::string getDir();
 	std::string getPath();

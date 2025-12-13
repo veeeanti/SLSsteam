@@ -1,5 +1,6 @@
 #include "config.hpp"
 
+#include "filewatcher.hpp"
 #include "log.hpp"
 #include "yaml-cpp/yaml.h"
 
@@ -133,11 +134,30 @@ bool CConfig::createFile()
 	return true;
 }
 
+static void onFileChange()
+{
+	g_config.loadSettings();
+}
+
 bool CConfig::init()
 {
-	createFile();
+	if(createFile())
+	{
+		watcher = new CFileWatcher(onFileChange);
+		watcher->addFile(getPath().c_str());
+		watcher->start();
+	}
+
 	loadSettings();
 	return true;
+}
+
+CConfig::~CConfig()
+{
+	if (watcher)
+	{
+		delete watcher;
+	}
 }
 
 bool CConfig::loadSettings()
