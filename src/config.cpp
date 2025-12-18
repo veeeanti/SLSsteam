@@ -124,18 +124,18 @@ bool CConfig::loadSettings()
 	blockEncryptedAppTickets = getSetting<bool>(node, "BlockEncryptedAppTickets", false);
 
 	//TODO: Create smart logging function to log them automatically via getSetting
-	g_pLog->info("DisableFamilyShareLock: %i\n", disableFamilyLock);
-	g_pLog->info("UseWhitelist: %i\n", useWhiteList);
-	g_pLog->info("AutoFilterList: %i\n", automaticFilter);
-	g_pLog->info("PlayNotOwnedGames: %i\n", playNotOwnedGames);
-	g_pLog->info("SafeMode: %i\n", safeMode);
-	g_pLog->info("Notifications: %i\n", notifications);
-	g_pLog->info("WarnHashMissmatch: %i\n", warnHashMissmatch);
-	g_pLog->info("NotifyInit: %i\n", notifyInit);
-	g_pLog->info("API: %i\n", api);
-	g_pLog->info("ExtendedLogging: %i\n", extendedLogging);
-	g_pLog->info("LogLevel: %i\n", logLevel);
-	g_pLog->info("BlockEncryptedAppTickets: %i\n", blockEncryptedAppTickets);
+	g_pLog->info("DisableFamilyShareLock: %i\n", disableFamilyLock.get());
+	g_pLog->info("UseWhitelist: %i\n", useWhiteList.get());
+	g_pLog->info("AutoFilterList: %i\n", automaticFilter.get());
+	g_pLog->info("PlayNotOwnedGames: %i\n", playNotOwnedGames.get());
+	g_pLog->info("SafeMode: %i\n", safeMode.get());
+	g_pLog->info("Notifications: %i\n", notifications.get());
+	g_pLog->info("WarnHashMissmatch: %i\n", warnHashMissmatch.get());
+	g_pLog->info("NotifyInit: %i\n", notifyInit.get());
+	g_pLog->info("API: %i\n", api.get());
+	g_pLog->info("ExtendedLogging: %i\n", extendedLogging.get());
+	g_pLog->info("LogLevel: %i\n", logLevel.get());
+	g_pLog->info("BlockEncryptedAppTickets: %i\n", blockEncryptedAppTickets.get());
 
 	appIds = getList<uint32_t>(node, "AppIds");
 	addedAppIds = getList<uint32_t>(node, "AdditionalApps");
@@ -144,13 +144,15 @@ bool CConfig::loadSettings()
 	const auto fakeAppIdsNode = node["FakeAppIds"];
 	if (fakeAppIdsNode)
 	{
+		auto _fakeAppIds = fakeAppIds.empty();
+
 		for (const auto& node : fakeAppIdsNode)
 		{
 			try
 			{
 				uint32_t k = node.first.as<uint32_t>();
 				uint32_t v = node.second.as<uint32_t>();
-				fakeAppIds[k] = v;
+				_fakeAppIds[k] = v;
 
 				g_pLog->info("Added %u : %u to FakeAppIds\n", k, v);
 			}
@@ -160,6 +162,8 @@ bool CConfig::loadSettings()
 				break;
 			}
 		}
+
+		fakeAppIds.set(_fakeAppIds);
 	}
 	else
 	{
@@ -172,13 +176,17 @@ bool CConfig::loadSettings()
 	{
 		try
 		{
+			auto appId = idleStatusNode["AppId"].as<uint32_t>();
+			auto title = idleStatusNode["Title"].as<std::string>();
+
 			idleStatus = FakeGame_t
 			{
-				idleStatusNode["AppId"].as<uint32_t>(),
-				idleStatusNode["Title"].as<std::string>()
+				appId,
+				title
 			};
 
-			g_pLog->debug("Idle status %s with AppId %u\n", idleStatus.title.c_str(), idleStatus.appId);
+
+			g_pLog->debug("Idle status %s with AppId %u\n", title.c_str(), appId);
 		}
 		catch(...)
 		{
@@ -190,13 +198,16 @@ bool CConfig::loadSettings()
 	{
 		try
 		{
+			auto appId = unownedStatusNode["AppId"].as<uint32_t>();
+			auto title = unownedStatusNode["Title"].as<std::string>();
+
 			unownedStatus = FakeGame_t
 			{
-				unownedStatusNode["AppId"].as<uint32_t>(),
-				unownedStatusNode["Title"].as<std::string>()
+				appId,
+				title
 			};
 
-			g_pLog->debug("Unowned status %s with AppId %u\n", unownedStatus.title.c_str(), unownedStatus.appId);
+			g_pLog->debug("Unowned status %s with AppId %u\n", title.c_str(), appId);
 		}
 		catch(...)
 		{
@@ -207,6 +218,8 @@ bool CConfig::loadSettings()
 	const auto dlcDataNode = node["DlcData"];
 	if(dlcDataNode)
 	{
+		auto _dlcData = dlcData.empty();
+
 		for(auto& app : dlcDataNode)
 		{
 			try
@@ -227,7 +240,7 @@ bool CConfig::loadSettings()
 					g_pLog->info("DlcId %u -> %s\n", dlcId, dlcName.c_str());
 				}
 
-				dlcData[parentId] = data;
+				_dlcData[parentId] = data;
 			}
 			catch(...)
 			{
@@ -235,6 +248,8 @@ bool CConfig::loadSettings()
 				break;
 			}
 		}
+
+		dlcData = _dlcData;
 	}
 	else
 	{
@@ -244,17 +259,19 @@ bool CConfig::loadSettings()
 	const auto denuvoGamesNode = node["DenuvoGames"];
 	if (denuvoGamesNode)
 	{
+		auto _denuvoGames = denuvoGames.empty();
+
 		for (auto& steamIdNode : denuvoGamesNode)
 		{
 			try
 			{
 				const uint32_t steamId = steamIdNode.first.as<uint32_t>();
-				denuvoGames[steamId] = std::unordered_set<uint32_t>();
+				_denuvoGames[steamId] = std::unordered_set<uint32_t>();
 
 				for (auto& appIdNode : steamIdNode.second)
 				{
 					const uint32_t appId = appIdNode.as<uint32_t>();
-					denuvoGames[steamId].emplace(appId);
+					_denuvoGames[steamId].emplace(appId);
 
 					//Again, not loggin SteamId because of privacy
 					g_pLog->info("Added DenuvoGame %u\n", appId);
@@ -265,6 +282,8 @@ bool CConfig::loadSettings()
 				g_pLog->notify("Failed to parse DenuvoGames!");
 			}
 		}
+
+		denuvoGames.set(_denuvoGames);
 	}
 	else
 	{
@@ -276,17 +295,7 @@ bool CConfig::loadSettings()
 
 bool CConfig::isAddedAppId(uint32_t appId)
 {
-	return addedAppIds.contains(appId);
-}
-
-bool CConfig::addAdditionalAppId(uint32_t appId)
-{
-	if (isAddedAppId(appId))
-		return false;
-
-	addedAppIds.emplace(appId);
-	g_pLog->once("Force owned %u\n", appId); //once is unnessecary but just for consistency
-	return true;
+	return addedAppIds.get().contains(appId);
 }
 
 bool CConfig::shouldExcludeAppId(uint32_t appId)
@@ -300,8 +309,8 @@ bool CConfig::shouldExcludeAppId(uint32_t appId)
 	}
 	else
 	{
-		bool found = appIds.contains(appId);
-		exclude = !isAddedAppId(appId) && ((useWhiteList && !found) || (!useWhiteList && found));
+		bool found = appIds.get().contains(appId);
+		exclude = !isAddedAppId(appId) && ((useWhiteList.get() && !found) || (!useWhiteList.get() && found));
 	}
 
 	g_pLog->once("shouldExcludeAppId(%u) -> %i\n", appId, exclude);
@@ -310,7 +319,7 @@ bool CConfig::shouldExcludeAppId(uint32_t appId)
 
 uint32_t CConfig::getDenuvoGameOwner(uint32_t appId)
 {
-	for(const auto& tpl : denuvoGames)
+	for(const auto& tpl : denuvoGames.get())
 	{
 		if (tpl.second.contains(appId))
 		{

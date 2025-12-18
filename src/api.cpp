@@ -18,7 +18,7 @@ namespace SLSAPI
 
 bool SLSAPI::isEnabled()
 {
-	return g_config.api && fstream.is_open();
+	return g_config.api.get() && fstream.is_open();
 }
 
 void SLSAPI::onFileChange()

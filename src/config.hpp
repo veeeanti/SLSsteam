@@ -1,5 +1,6 @@
 #pragma once
 
+#include "mtvar.hpp"
 #include "log.hpp"
 
 #include "yaml-cpp/exceptions.h"
@@ -33,29 +34,28 @@ public:
 		//without implementing it ourself anyway
 	};
 
-	std::unordered_set<uint32_t> appIds;
-	std::unordered_set<uint32_t> addedAppIds;
-	std::unordered_map<uint32_t, CDlcData> dlcData;
-	std::unordered_set<uint32_t> fakeOffline;
-	std::unordered_map<uint32_t, uint32_t> fakeAppIds;
-	FakeGame_t idleStatus;
-	FakeGame_t unownedStatus;
+	MTVariable<std::unordered_set<uint32_t>> appIds;
+	MTVariable<std::unordered_set<uint32_t>> addedAppIds;
+	MTVariable<std::unordered_map<uint32_t, CDlcData>> dlcData;
+	MTVariable<std::unordered_set<uint32_t>> fakeOffline;
+	MTVariable<std::unordered_map<uint32_t, uint32_t>> fakeAppIds;
+	MTVariable<FakeGame_t> idleStatus;
+	MTVariable<FakeGame_t> unownedStatus;
 
-	//SteamId, AppIds tuple
-	std::unordered_map<uint32_t, std::unordered_set<uint32_t>> denuvoGames;
-	bool blockEncryptedAppTickets;
+	MTVariable<std::unordered_map<uint32_t, std::unordered_set<uint32_t>>> denuvoGames;
+	MTVariable<bool> blockEncryptedAppTickets;
 
-	bool disableFamilyLock;
-	bool useWhiteList;
-	bool automaticFilter;
-	bool playNotOwnedGames;
-	bool safeMode;
-	bool notifications;
-	bool warnHashMissmatch;
-	bool notifyInit;
-	bool api;
-	unsigned int logLevel;
-	bool extendedLogging;
+	MTVariable<bool> disableFamilyLock;
+	MTVariable<bool> useWhiteList;
+	MTVariable<bool> automaticFilter;
+	MTVariable<bool> playNotOwnedGames;
+	MTVariable<bool> safeMode;
+	MTVariable<bool> notifications;
+	MTVariable<bool> warnHashMissmatch;
+	MTVariable<bool> notifyInit;
+	MTVariable<bool> api;
+	MTVariable<unsigned int> logLevel;
+	MTVariable<bool> extendedLogging;
 
 	//Using incomplete class to avoid runtime linking errors
 	CFileWatcher* watcher;

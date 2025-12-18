@@ -59,12 +59,12 @@ bool Apps::checkAppOwnership(uint32_t appId, CAppOwnershipInfo* pInfo)
 
 	//TODO: Backtrace those 4 calls and only patch the really necessary ones since this might be prone to breakage
 	//Edit: Not worth it.
-	if (g_config.disableFamilyLock && appIdOwnerOverride.contains(appId) && appIdOwnerOverride.at(appId) < 4)
+	if (g_config.disableFamilyLock.get() && appIdOwnerOverride.contains(appId) && appIdOwnerOverride.at(appId) < 4)
 	{
 		unlockApp(appId, pInfo, 1);
 		appIdOwnerOverride[appId]++;
 	}
-	else if (!g_config.shouldExcludeAppId(appId) && (g_config.isAddedAppId(appId) || (g_config.playNotOwnedGames && !pInfo->purchased)))
+	else if (!g_config.shouldExcludeAppId(appId) && (g_config.isAddedAppId(appId) || (g_config.playNotOwnedGames.get() && !pInfo->purchased)))
 	{
 		unlockApp(appId, pInfo);
 	}
@@ -79,7 +79,7 @@ bool Apps::checkAppOwnership(uint32_t appId, CAppOwnershipInfo* pInfo)
 		return false;
 	}
 
-	if (g_config.automaticFilter)
+	if (g_config.automaticFilter.get())
 	{
 		switch(type)
 		{
@@ -100,12 +100,12 @@ void Apps::getSubscribedApps(uint32_t* appList, size_t size, uint32_t& count)
 	//Valve calls this function twice, once with size of 0 then again
 	if (!size || !appList)
 	{
-		count = count + g_config.addedAppIds.size();
+		count = count + g_config.addedAppIds.get().size();
 		return;
 	}
 
 	//TODO: Maybe Add check if AppId already in list before blindly appending
-	for(auto& appId : g_config.addedAppIds)
+	for(auto& appId : g_config.addedAppIds.get())
 	{
 		appList[count++] = appId;
 	}

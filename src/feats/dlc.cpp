@@ -51,9 +51,10 @@ bool DLC::userSubscribedInTicket(uint32_t appId)
 
 uint32_t DLC::getDlcCount(uint32_t appId)
 {
-	if (g_config.dlcData.contains(appId))
+	const auto dlcData = g_config.dlcData.get();
+	if (dlcData.contains(appId))
 	{
-		return g_config.dlcData[appId].dlcIds.size();
+		return dlcData.at(appId).dlcIds.size();
 	}
 
 	return 0;
@@ -66,9 +67,10 @@ bool DLC::getDlcDataByIndex(uint32_t appId, int index, uint32_t* dlcId, bool* av
 		return false;
 	}
 
-	if (g_config.dlcData.contains(appId))
+	auto dlcData = g_config.dlcData.get();
+	if (dlcData.contains(appId))
 	{
-		auto& data = g_config.dlcData[appId];
+		auto& data = dlcData[appId];
 		auto dlc = std::next(data.dlcIds.begin(), index);
 
 		*dlcId = dlc->first;

@@ -13,7 +13,7 @@ bool FakeOffline::shouldFakeOffline()
 	}
 	
 	const uint32_t appId = g_pClientUtils->getAppId();
-	if (!appId || !g_config.fakeOffline.contains(appId))
+	if (!appId || !g_config.fakeOffline.get().contains(appId))
 	{
 		return false;
 	}

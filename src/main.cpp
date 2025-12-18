@@ -166,13 +166,13 @@ static void load()
 
 	if (!verifySteamClientHash())
 	{
-		if (g_config.safeMode)
+		if (g_config.safeMode.get())
 		{
 			g_pLog->warn("Unknown steamclient.so hash! Aborting...");
 			unload();
 			return;
 		}
-		else if (g_config.warnHashMissmatch)
+		else if (g_config.warnHashMissmatch.get())
 		{
 			g_pLog->warn("steamclient.so hash missmatch! Please update :)");
 		}
@@ -192,7 +192,7 @@ static void load()
 
 	SLSAPI::init();
 
-	if (g_config.notifyInit)
+	if (g_config.notifyInit.get())
 	{
 		const auto now = std::chrono::time_point{std::chrono::system_clock::now()};
 		const auto ymd = std::chrono::year_month_day{std::chrono::floor<std::chrono::days>(now)};

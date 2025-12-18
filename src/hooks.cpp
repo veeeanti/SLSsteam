@@ -155,7 +155,7 @@ static void hkLogSteamPipeCall(const char* iface, const char* fn)
 {
 	Hooks::LogSteamPipeCall.tramp.fn(iface, fn);
 
-	if (g_config.extendedLogging)
+	if (g_config.extendedLogging.get())
 	{
 		g_pLog->debug
 		(
@@ -203,7 +203,7 @@ static uint32_t hkProtoBufMsgBase_Send(CProtoBufMsgBase* pMsg)
 						continue;
 					}
 
-					if (g_config.disableFamilyLock)
+					if (g_config.disableFamilyLock.get())
 					{
 						game->set_owner_id(1);
 					}
@@ -212,7 +212,7 @@ static uint32_t hkProtoBufMsgBase_Send(CProtoBufMsgBase* pMsg)
 				}
 
 				const int games = body->games_played_size();
-				const auto statusApp = games ? g_config.unownedStatus : g_config.idleStatus;
+				const auto statusApp = games ? g_config.unownedStatus.get() : g_config.idleStatus.get();
 				if (statusApp.appId)
 				{
 					//pMsg->send(); //Send original message first, otherwise Valve's backend might fuck up the order
@@ -247,7 +247,7 @@ static bool hkSteamEngine_GetAPICallResult(void* pSteamEngine, uint32_t callback
 {
 	const auto ret = Hooks::CSteamEngine_GetAPICallResult.tramp.fn(pSteamEngine, callbackHandle, a2, pCallback, callbackSize, type, pbFailed);
 
-	if (g_config.extendedLogging)
+	if (g_config.extendedLogging.get())
 	{
 		g_pLog->debug
 		(
@@ -993,7 +993,7 @@ bool Hooks::setup()
 
 void Hooks::place()
 {
-	if (g_config.disableFamilyLock)
+	if (g_config.disableFamilyLock.get())
 	{
 		patchRetn(Patterns::FamilyGroupRunningApp.address);
 		patchRetn(Patterns::StopPlayingBorrowedApp.address);
