@@ -562,7 +562,7 @@ static void hkClientUGC_PipeLoop(void* pClientUGC, void* a1, void* a2, void* a3)
 	Hooks::IClientUGC_PipeLoop.tramp.fn(pClientUGC, a1, a2, a3);
 	FakeAppIds::pipeLoop(true);
 
-	g_pLog->debug("IClientUGC::PipeLoop in %u for %u\n", *g_pClientUtils->getPipeIndex(), g_pClientUtils->getAppId());
+	//g_pLog->debug("IClientUGC::PipeLoop in %u for %u\n", *g_pClientUtils->getPipeIndex(), g_pClientUtils->getAppId());
 }
 
 static bool hkClientUtils_GetOfflineMode(void* pClientUtils)
