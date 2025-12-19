@@ -120,6 +120,12 @@ namespace Patterns
 			"E8 ? ? ? ? 89 C6 83 C4 10 85 C0 0F 84 ? ? ? ? 8B 9D ? ? ? ? 39 D8",
 			SigFollowMode::Relative
 		};
+		Pattern_t PostCallback
+		{
+			"CSteamEngine::PostCallback",
+			"E8 ? ? ? ? 8D 86 ? ? ? ? 83 C4 18 68 F6 01 00 00",
+			SigFollowMode::Relative
+		};
 		Pattern_t UpdateAppOwnershipTicket
 		{
 			"IClientUser::UpdateAppOwnershipTicket",

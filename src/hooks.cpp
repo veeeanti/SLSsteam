@@ -11,7 +11,6 @@
 #include "sdk/CProtoBufMsgBase.hpp"
 #include "sdk/CSteamEngine.hpp"
 #include "sdk/CUser.hpp"
-#include "sdk/ECallback.hpp"
 #include "sdk/EResult.hpp"
 #include "sdk/IClientUser.hpp"
 #include "sdk/IClientAppManager.hpp"
@@ -186,48 +185,6 @@ static void hkProtoBufMsgBase_New(CProtoBufMsgBase* pMsg, void* pSrc)
 
 static uint32_t hkProtoBufMsgBase_Send(CProtoBufMsgBase* pMsg)
 {
-	switch(pMsg->type)
-	{
-		case EMSG_GAMESPLAYED:
-		case EMSG_GAMESPLAYED_NO_DATABLOB:
-		case EMSG_GAMESPLAYED_WITH_DATABLOB:
-			{
-				const auto body = reinterpret_cast<CMsgClientGamesPlayed*>(pMsg->body);
-
-				for(int i = 0; i < body->games_played_size(); i++)
-				{
-					auto game = body->mutable_games_played(i);
-
-					if (!game->game_id())
-					{
-						continue;
-					}
-
-					if (g_config.disableFamilyLock.get())
-					{
-						game->set_owner_id(1);
-					}
-
-					g_pLog->debug("Playing game %llu with flags %u\n", game->game_id(), game->game_flags());
-				}
-
-				const int games = body->games_played_size();
-				const auto statusApp = games ? g_config.unownedStatus.get() : g_config.idleStatus.get();
-				if (statusApp.appId)
-				{
-					//pMsg->send(); //Send original message first, otherwise Valve's backend might fuck up the order
-					//Only happens in owned games for some reason, so idk
-
-					auto game = body->add_games_played();
-					game->set_game_id(statusApp.appId);
-					game->set_game_extra_info(statusApp.title);
-					game->set_game_flags(0);
-					game->set_game_flags(EGAMEFLAG_MULTIPLAYER);
-				}
-			}
-			break;
-	}
-
 	Apps::sendMsg(pMsg);
 
 	const uint32_t ret = Hooks::CProtoBufMsgBase_Send.tramp.fn(pMsg);
@@ -350,7 +307,7 @@ static void* hkClientAppManager_LaunchApp(void* pClientAppManager, uint32_t* pAp
 			a3,
 			a4
 		);
-		Apps::launchApp(*pAppId);
+
 		Ticket::launchApp(*pAppId);
 	}
 

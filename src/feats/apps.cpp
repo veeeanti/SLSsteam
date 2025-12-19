@@ -58,14 +58,7 @@ bool Apps::checkAppOwnership(uint32_t appId, CAppOwnershipInfo* pInfo)
 		return false;
 	}
 
-	//TODO: Backtrace those 4 calls and only patch the really necessary ones since this might be prone to breakage
-	//Edit: Not worth it.
-	if (g_config.disableFamilyLock.get() && appIdOwnerOverride.contains(appId) && appIdOwnerOverride.at(appId) < 4)
-	{
-		unlockApp(appId, pInfo, 1);
-		appIdOwnerOverride[appId]++;
-	}
-	else if (!g_config.shouldExcludeAppId(appId) && (g_config.isAddedAppId(appId) || (g_config.playNotOwnedGames.get() && !pInfo->purchased)))
+	if (!g_config.shouldExcludeAppId(appId) && (g_config.isAddedAppId(appId) || (g_config.playNotOwnedGames.get() && !pInfo->purchased)))
 	{
 		unlockApp(appId, pInfo);
 	}
@@ -114,11 +107,6 @@ void Apps::getSubscribedApps(uint32_t* appList, size_t size, uint32_t& count)
 	applistRequested = true;
 }
 
-void Apps::launchApp(uint32_t appId)
-{
-	appIdOwnerOverride[appId] = 0;
-}
-
 bool Apps::shouldDisableCloud(uint32_t appId)
 {
 	return !g_pSteamEngine->getUser(0)->checkAppOwnership(appId);
@@ -135,24 +123,67 @@ bool Apps::shouldDisableUpdates(uint32_t appId)
 	return g_config.isAddedAppId(appId) || !g_pSteamEngine->getUser(0)->checkAppOwnership(appId);
 }
 
+void Apps::sendGamesPlayed(CMsgClientGamesPlayed* msg)
+{
+	for(int i = 0; i < msg->games_played_size(); i++)
+	{
+		auto game = msg->mutable_games_played(i);
+
+		if (!game->game_id())
+		{
+			continue;
+		}
+
+		if (g_config.disableFamilyLock.get())
+		{
+			game->set_owner_id(1);
+		}
+
+		g_pLog->debug("Playing game %llu with flags %u\n", game->game_id(), game->game_flags());
+	}
+
+	const int games = msg->games_played_size();
+	const auto statusApp = games ? g_config.unownedStatus.get() : g_config.idleStatus.get();
+	if (statusApp.appId)
+	{
+		//pMsg->send(); //Send original message first, otherwise Valve's backend might fuck up the order
+		//Only happens in owned games for some reason, so idk
+
+		auto game = msg->add_games_played();
+		game->set_game_id(statusApp.appId);
+		game->set_game_extra_info(statusApp.title);
+		game->set_game_flags(0);
+		//game->set_game_flags(EGAMEFLAG_MULTIPLAYER);
+	}
+}
+
+void Apps::sendPICSInfoRequest(CMsgClientPICSProductInfoRequest* msg)
+{
+	const auto tokens = g_config.appTokens.get();
+
+	for(int i = 0; i < msg->apps_size(); i++)
+	{
+		auto app = msg->mutable_apps(i);
+		if (tokens.contains(app->appid()))
+		{
+			app->set_access_token(tokens.at(app->appid()));
+			g_pLog->debug("Used access token from config for %u\n", app->appid());
+		}
+	}
+}
+
 void Apps::sendMsg(CProtoBufMsgBase *msg)
 {
 	switch(msg->type)
 	{
 		case EMSG_PICS_PRODUCTINFO_REQUEST:
-		{
-			const auto body = reinterpret_cast<CMsgClientPICSProductInfoRequest*>(msg->body);
-			const auto tokens = g_config.appTokens.get();
+			sendPICSInfoRequest(reinterpret_cast<CMsgClientPICSProductInfoRequest*>(msg->body));
+			break;
 
-			for(int i = 0; i < body->apps_size(); i++)
-			{
-				auto app = body->mutable_apps(i);
-				if (tokens.contains(app->appid()))
-				{
-					app->set_access_token(tokens.at(app->appid()));
-					g_pLog->debug("Used access token from config for %u\n", app->appid());
-				}
-			}
-		}
+		case EMSG_GAMESPLAYED:
+		case EMSG_GAMESPLAYED_NO_DATABLOB:
+		case EMSG_GAMESPLAYED_WITH_DATABLOB:
+			sendGamesPlayed(reinterpret_cast<CMsgClientGamesPlayed*>(msg->body));
+			break;
 	}
 }

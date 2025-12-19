@@ -1,6 +1,7 @@
 #include "CSteamEngine.hpp"
 
 #include "../hooks.hpp"
+#include "../patterns.hpp"
 
 
 CUser* CSteamEngine::getUser(uint32_t index)
