@@ -157,8 +157,7 @@ bool CConfig::loadSettings()
 				title
 			};
 
-
-			g_pLog->debug("Idle status %s with AppId %u\n", title.c_str(), appId);
+			g_pLog->info("Idle status %s with AppId %u\n", title.c_str(), appId);
 		}
 		catch(...)
 		{
@@ -179,7 +178,7 @@ bool CConfig::loadSettings()
 				title
 			};
 
-			g_pLog->debug("Unowned status %s with AppId %u\n", title.c_str(), appId);
+			g_pLog->info("Unowned status %s with AppId %u\n", title.c_str(), appId);
 		}
 		catch(...)
 		{

@@ -54,6 +54,15 @@ FakeOffline:
 #Use 0 as a key to set for all unowned Apps
 FakeAppIds:
 
+#Custom ingame statuses. Set AppId to 0 to disable
+IdleStatus:
+  AppId: 0
+  Title: ""
+
+UnownedStatus:
+  AppId: 0
+  Title: ""
+
 #Blocks games from unlocking on wrong accounts
 DenuvoGames:
 
