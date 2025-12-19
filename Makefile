@@ -56,8 +56,8 @@ zips: rebuild
 		"setup.sh" \
 		"docs/LICENSE" \
 		"res/config.yaml" \
-		"tools/SLScheevo" #\
-		#"tools/ticket-grabber/bin/Release/net9.0/linux-x64/publish/ticket-grabber"
+		"tools/SLScheevo" \
+		"tools/ticket-grabber/bin/Release/net9.0/linux-x64/publish/ticket-grabber"
 
 	#Compatibility for Github issues
 	7z a -mx9 -m9=lzma \
@@ -66,8 +66,8 @@ zips: rebuild
 		"setup.sh" \
 		"docs/LICENSE" \
 		"res/config.yaml" \
-		"tools/SLScheevo" #\
-		#"tools/ticket-grabber/bin/Release/net9.0/linux-x64/publish/ticket-grabber"
+		"tools/SLScheevo" \
+		"tools/ticket-grabber/bin/Release/net9.0/linux-x64/publish/ticket-grabber"
 
 zips-config:
 	7z a -mx9 -m9=lzma "zips/SLSsteam - SLSConfig $(DATE).zip" "$(HOME)/.config/SLSsteam/config.yaml"

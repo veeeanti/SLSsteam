@@ -33,8 +33,8 @@ build() {
 	cd "$srcdir/SLSsteam-$pkgver"
 	make
 
-	#cd "$srcdir/SLSsteam/tools/ticket-grabber"
-	#./build.sh
+	cd "$srcdir/SLSsteam-$pkgver/tools/ticket-grabber"
+	./build.sh
 }
 
 package() {
@@ -46,5 +46,5 @@ package() {
 	install -D "$srcdir/SLSsteam-$pkgver/res/logo.png" "$pkgdir/usr/share/pixmaps/SLSsteam.png"
 
 	#Disabled until dev reaches main
-	#install -D "$srcdir/SLSsteam-$pkgver/tools/ticket-grabber/bin/Release/net9.0/linux-x64/publish/ticket-grabber" "$pkgdir/usr/bin/sls-ticket-grabber"
+	install -D "$srcdir/SLSsteam-$pkgver/tools/ticket-grabber/bin/Release/net9.0/linux-x64/publish/ticket-grabber" "$pkgdir/usr/bin/sls-ticket-grabber"
 }
