@@ -406,7 +406,9 @@ constexpr CPackageReservationStatus::CPackageReservationStatus(
   , expired_(false)
   , time_expires_(0u)
   , time_reserved_(0u)
-  , rtime_estimated_notification_(0u){}
+  , rtime_estimated_notification_(0u)
+  , queue_head_position_at_reservation_(0)
+  , queue_head_position_now_(0){}
 struct CPackageReservationStatusDefaultTypeInternal {
   constexpr CPackageReservationStatusDefaultTypeInternal()
     : _instance(::PROTOBUF_NAMESPACE_ID::internal::ConstantInitialized{}) {}
@@ -9580,6 +9582,12 @@ class CPackageReservationStatus::_Internal {
   static void set_has_notificaton_token(HasBits* has_bits) {
     (*has_bits)[0] |= 2u;
   }
+  static void set_has_queue_head_position_at_reservation(HasBits* has_bits) {
+    (*has_bits)[0] |= 1024u;
+  }
+  static void set_has_queue_head_position_now(HasBits* has_bits) {
+    (*has_bits)[0] |= 2048u;
+  }
 };
 
 CPackageReservationStatus::CPackageReservationStatus(::PROTOBUF_NAMESPACE_ID::Arena* arena)
@@ -9603,8 +9611,8 @@ CPackageReservationStatus::CPackageReservationStatus(const CPackageReservationSt
       GetArena());
   }
   ::memcpy(&packageid_, &from.packageid_,
-    static_cast<size_t>(reinterpret_cast<char*>(&rtime_estimated_notification_) -
-    reinterpret_cast<char*>(&packageid_)) + sizeof(rtime_estimated_notification_));
+    static_cast<size_t>(reinterpret_cast<char*>(&queue_head_position_now_) -
+    reinterpret_cast<char*>(&packageid_)) + sizeof(queue_head_position_now_));
   // @@protoc_insertion_point(copy_constructor:CPackageReservationStatus)
 }
 
@@ -9613,8 +9621,8 @@ reservation_country_code_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::G
 notificaton_token_.UnsafeSetDefault(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited());
 ::memset(reinterpret_cast<char*>(this) + static_cast<size_t>(
     reinterpret_cast<char*>(&packageid_) - reinterpret_cast<char*>(this)),
-    0, static_cast<size_t>(reinterpret_cast<char*>(&rtime_estimated_notification_) -
-    reinterpret_cast<char*>(&packageid_)) + sizeof(rtime_estimated_notification_));
+    0, static_cast<size_t>(reinterpret_cast<char*>(&queue_head_position_now_) -
+    reinterpret_cast<char*>(&packageid_)) + sizeof(queue_head_position_now_));
 }
 
 CPackageReservationStatus::~CPackageReservationStatus() {
@@ -9659,10 +9667,10 @@ void CPackageReservationStatus::Clear() {
         reinterpret_cast<char*>(&time_expires_) -
         reinterpret_cast<char*>(&packageid_)) + sizeof(time_expires_));
   }
-  if (cached_has_bits & 0x00000300u) {
+  if (cached_has_bits & 0x00000f00u) {
     ::memset(&time_reserved_, 0, static_cast<size_t>(
-        reinterpret_cast<char*>(&rtime_estimated_notification_) -
-        reinterpret_cast<char*>(&time_reserved_)) + sizeof(rtime_estimated_notification_));
+        reinterpret_cast<char*>(&queue_head_position_now_) -
+        reinterpret_cast<char*>(&time_reserved_)) + sizeof(queue_head_position_now_));
   }
   _has_bits_.Clear();
   _internal_metadata_.Clear<std::string>();
@@ -9756,6 +9764,22 @@ const char* CPackageReservationStatus::_InternalParse(const char* ptr, ::PROTOBU
           CHK_(ptr);
         } else goto handle_unusual;
         continue;
+      // optional int32 queue_head_position_at_reservation = 11;
+      case 11:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 88)) {
+          _Internal::set_has_queue_head_position_at_reservation(&has_bits);
+          queue_head_position_at_reservation_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
+      // optional int32 queue_head_position_now = 12;
+      case 12:
+        if (PROTOBUF_PREDICT_TRUE(static_cast<::PROTOBUF_NAMESPACE_ID::uint8>(tag) == 96)) {
+          _Internal::set_has_queue_head_position_now(&has_bits);
+          queue_head_position_now_ = ::PROTOBUF_NAMESPACE_ID::internal::ReadVarint64(&ptr);
+          CHK_(ptr);
+        } else goto handle_unusual;
+        continue;
       default: {
       handle_unusual:
         if ((tag & 7) == 4 || tag == 0) {
@@ -9846,6 +9870,18 @@ failure:
         10, this->_internal_notificaton_token(), target);
   }
 
+  // optional int32 queue_head_position_at_reservation = 11;
+  if (cached_has_bits & 0x00000400u) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(11, this->_internal_queue_head_position_at_reservation(), target);
+  }
+
+  // optional int32 queue_head_position_now = 12;
+  if (cached_has_bits & 0x00000800u) {
+    target = stream->EnsureSpace(target);
+    target = ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::WriteInt32ToArray(12, this->_internal_queue_head_position_now(), target);
+  }
+
   if (PROTOBUF_PREDICT_FALSE(_internal_metadata_.have_unknown_fields())) {
     target = stream->WriteRaw(_internal_metadata_.unknown_fields<std::string>(::PROTOBUF_NAMESPACE_ID::internal::GetEmptyString).data(),
         static_cast<int>(_internal_metadata_.unknown_fields<std::string>(::PROTOBUF_NAMESPACE_ID::internal::GetEmptyString).size()), target);
@@ -9919,7 +9955,7 @@ size_t CPackageReservationStatus::ByteSizeLong() const {
     }
 
   }
-  if (cached_has_bits & 0x00000300u) {
+  if (cached_has_bits & 0x00000f00u) {
     // optional uint32 time_reserved = 8;
     if (cached_has_bits & 0x00000100u) {
       total_size += 1 +
@@ -9932,6 +9968,20 @@ size_t CPackageReservationStatus::ByteSizeLong() const {
       total_size += 1 +
         ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::UInt32Size(
           this->_internal_rtime_estimated_notification());
+    }
+
+    // optional int32 queue_head_position_at_reservation = 11;
+    if (cached_has_bits & 0x00000400u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+          this->_internal_queue_head_position_at_reservation());
+    }
+
+    // optional int32 queue_head_position_now = 12;
+    if (cached_has_bits & 0x00000800u) {
+      total_size += 1 +
+        ::PROTOBUF_NAMESPACE_ID::internal::WireFormatLite::Int32Size(
+          this->_internal_queue_head_position_now());
     }
 
   }
@@ -9984,12 +10034,18 @@ void CPackageReservationStatus::MergeFrom(const CPackageReservationStatus& from)
     }
     _has_bits_[0] |= cached_has_bits;
   }
-  if (cached_has_bits & 0x00000300u) {
+  if (cached_has_bits & 0x00000f00u) {
     if (cached_has_bits & 0x00000100u) {
       time_reserved_ = from.time_reserved_;
     }
     if (cached_has_bits & 0x00000200u) {
       rtime_estimated_notification_ = from.rtime_estimated_notification_;
+    }
+    if (cached_has_bits & 0x00000400u) {
+      queue_head_position_at_reservation_ = from.queue_head_position_at_reservation_;
+    }
+    if (cached_has_bits & 0x00000800u) {
+      queue_head_position_now_ = from.queue_head_position_now_;
     }
     _has_bits_[0] |= cached_has_bits;
   }
@@ -10013,8 +10069,8 @@ void CPackageReservationStatus::InternalSwap(CPackageReservationStatus* other) {
   reservation_country_code_.Swap(&other->reservation_country_code_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   notificaton_token_.Swap(&other->notificaton_token_, &::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), GetArena());
   ::PROTOBUF_NAMESPACE_ID::internal::memswap<
-      PROTOBUF_FIELD_OFFSET(CPackageReservationStatus, rtime_estimated_notification_)
-      + sizeof(CPackageReservationStatus::rtime_estimated_notification_)
+      PROTOBUF_FIELD_OFFSET(CPackageReservationStatus, queue_head_position_now_)
+      + sizeof(CPackageReservationStatus::queue_head_position_now_)
       - PROTOBUF_FIELD_OFFSET(CPackageReservationStatus, packageid_)>(
           reinterpret_cast<char*>(&packageid_),
           reinterpret_cast<char*>(&other->packageid_));

@@ -5732,6 +5732,8 @@ class CPackageReservationStatus PROTOBUF_FINAL :
     kTimeExpiresFieldNumber = 7,
     kTimeReservedFieldNumber = 8,
     kRtimeEstimatedNotificationFieldNumber = 9,
+    kQueueHeadPositionAtReservationFieldNumber = 11,
+    kQueueHeadPositionNowFieldNumber = 12,
   };
   // optional string reservation_country_code = 5;
   bool has_reservation_country_code() const;
@@ -5877,6 +5879,32 @@ class CPackageReservationStatus PROTOBUF_FINAL :
   void _internal_set_rtime_estimated_notification(::PROTOBUF_NAMESPACE_ID::uint32 value);
   public:
 
+  // optional int32 queue_head_position_at_reservation = 11;
+  bool has_queue_head_position_at_reservation() const;
+  private:
+  bool _internal_has_queue_head_position_at_reservation() const;
+  public:
+  void clear_queue_head_position_at_reservation();
+  ::PROTOBUF_NAMESPACE_ID::int32 queue_head_position_at_reservation() const;
+  void set_queue_head_position_at_reservation(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_queue_head_position_at_reservation() const;
+  void _internal_set_queue_head_position_at_reservation(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
+  // optional int32 queue_head_position_now = 12;
+  bool has_queue_head_position_now() const;
+  private:
+  bool _internal_has_queue_head_position_now() const;
+  public:
+  void clear_queue_head_position_now();
+  ::PROTOBUF_NAMESPACE_ID::int32 queue_head_position_now() const;
+  void set_queue_head_position_now(::PROTOBUF_NAMESPACE_ID::int32 value);
+  private:
+  ::PROTOBUF_NAMESPACE_ID::int32 _internal_queue_head_position_now() const;
+  void _internal_set_queue_head_position_now(::PROTOBUF_NAMESPACE_ID::int32 value);
+  public:
+
   // @@protoc_insertion_point(class_scope:CPackageReservationStatus)
  private:
   class _Internal;
@@ -5896,6 +5924,8 @@ class CPackageReservationStatus PROTOBUF_FINAL :
   ::PROTOBUF_NAMESPACE_ID::uint32 time_expires_;
   ::PROTOBUF_NAMESPACE_ID::uint32 time_reserved_;
   ::PROTOBUF_NAMESPACE_ID::uint32 rtime_estimated_notification_;
+  ::PROTOBUF_NAMESPACE_ID::int32 queue_head_position_at_reservation_;
+  ::PROTOBUF_NAMESPACE_ID::int32 queue_head_position_now_;
   friend struct ::TableStruct_steammessages_5fbase_2eproto;
 };
 // -------------------------------------------------------------------
@@ -14392,6 +14422,62 @@ inline void CPackageReservationStatus::set_allocated_notificaton_token(std::stri
   notificaton_token_.SetAllocated(&::PROTOBUF_NAMESPACE_ID::internal::GetEmptyStringAlreadyInited(), notificaton_token,
       GetArena());
   // @@protoc_insertion_point(field_set_allocated:CPackageReservationStatus.notificaton_token)
+}
+
+// optional int32 queue_head_position_at_reservation = 11;
+inline bool CPackageReservationStatus::_internal_has_queue_head_position_at_reservation() const {
+  bool value = (_has_bits_[0] & 0x00000400u) != 0;
+  return value;
+}
+inline bool CPackageReservationStatus::has_queue_head_position_at_reservation() const {
+  return _internal_has_queue_head_position_at_reservation();
+}
+inline void CPackageReservationStatus::clear_queue_head_position_at_reservation() {
+  queue_head_position_at_reservation_ = 0;
+  _has_bits_[0] &= ~0x00000400u;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 CPackageReservationStatus::_internal_queue_head_position_at_reservation() const {
+  return queue_head_position_at_reservation_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 CPackageReservationStatus::queue_head_position_at_reservation() const {
+  // @@protoc_insertion_point(field_get:CPackageReservationStatus.queue_head_position_at_reservation)
+  return _internal_queue_head_position_at_reservation();
+}
+inline void CPackageReservationStatus::_internal_set_queue_head_position_at_reservation(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _has_bits_[0] |= 0x00000400u;
+  queue_head_position_at_reservation_ = value;
+}
+inline void CPackageReservationStatus::set_queue_head_position_at_reservation(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_queue_head_position_at_reservation(value);
+  // @@protoc_insertion_point(field_set:CPackageReservationStatus.queue_head_position_at_reservation)
+}
+
+// optional int32 queue_head_position_now = 12;
+inline bool CPackageReservationStatus::_internal_has_queue_head_position_now() const {
+  bool value = (_has_bits_[0] & 0x00000800u) != 0;
+  return value;
+}
+inline bool CPackageReservationStatus::has_queue_head_position_now() const {
+  return _internal_has_queue_head_position_now();
+}
+inline void CPackageReservationStatus::clear_queue_head_position_now() {
+  queue_head_position_now_ = 0;
+  _has_bits_[0] &= ~0x00000800u;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 CPackageReservationStatus::_internal_queue_head_position_now() const {
+  return queue_head_position_now_;
+}
+inline ::PROTOBUF_NAMESPACE_ID::int32 CPackageReservationStatus::queue_head_position_now() const {
+  // @@protoc_insertion_point(field_get:CPackageReservationStatus.queue_head_position_now)
+  return _internal_queue_head_position_now();
+}
+inline void CPackageReservationStatus::_internal_set_queue_head_position_now(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _has_bits_[0] |= 0x00000800u;
+  queue_head_position_now_ = value;
+}
+inline void CPackageReservationStatus::set_queue_head_position_now(::PROTOBUF_NAMESPACE_ID::int32 value) {
+  _internal_set_queue_head_position_now(value);
+  // @@protoc_insertion_point(field_set:CPackageReservationStatus.queue_head_position_now)
 }
 
 // -------------------------------------------------------------------
