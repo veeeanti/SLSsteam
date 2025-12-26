@@ -15,7 +15,8 @@ LDFLAGS := -shared -Wl,--no-undefined
 LDFLAGS += $(shell pkg-config --libs "openssl")
 LDFLAGS += $(shell pkg-config --libs "libcurl")
 
-DATE := $(shell date "+%Y%m%d%H%M%S")
+#DATE := $(shell date "+%Y%m%d%H%M%S")
+DATE := $(shell cat res/version.txt)
 
 ifeq ($(shell echo $$NATIVE),1)
 	CXXFLAGS += -march=native
