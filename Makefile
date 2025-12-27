@@ -30,10 +30,18 @@ ifeq ($(shell type mold &> /dev/null && echo "found"),found)
 	LDFLAGS += -fuse-ld=mold
 endif
 
+audit-libs: bin/SLSsteam.so bin/library-inject.so
+
 bin/SLSsteam.so: $(objs) $(libs)
 	@mkdir -p bin
 	$(CXX) $(CXXFLAGS) $^ -o bin/SLSsteam.so $(LDFLAGS)
 
+bin/library-inject.so: tools/library-inject/main.cpp tools/library-inject/build.sh
+	sh tools/library-inject/build.sh
+	@mkdir -p bin
+	cp tools/library-inject/library-inject.so bin/library-inject.so
+
+-include $(deps)
 obj/update.o: src/update.cpp res/version.txt
 	$(shell ./embed-version.sh)
 	@mkdir -p $(dir $@)
