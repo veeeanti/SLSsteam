@@ -23,7 +23,7 @@
 #include <unistd.h>
 
 
-static bool cleanEnvVar(const char* varName)
+static bool cleanEnvVar(const char* varName, const char* endsWith)
 {
 	char* var = getenv(varName);
 	if (var == NULL)
@@ -35,9 +35,9 @@ static bool cleanEnvVar(const char* varName)
 	for(unsigned int i = 0; i < splits.size(); i++)
 	{
 		auto split = splits.at(i);
-		if (split.ends_with("SLSsteam.so"))
+		if (split.ends_with(endsWith))
 		{
-			g_pLog->debug("Removed SLSsteam.so from $%s\n", varName);
+			g_pLog->debug("Removed %s from $%s\n", endsWith, varName);
 			continue;
 		}
 
@@ -48,7 +48,14 @@ static bool cleanEnvVar(const char* varName)
 		newEnv.append(split);
 	}
 
-	setenv(varName, newEnv.c_str(), true);
+	if(newEnv.size())
+	{
+		setenv(varName, newEnv.c_str(), true);
+	}
+	else
+	{
+		unsetenv(varName);
+	}
 	//g_pLog->debug("Set %s to %s\n", varName, newEnv.c_str());
 
 	return true;
@@ -100,7 +107,13 @@ static void setup()
 
 	g_pLog->debug("SLSsteam loading in %s\n", proc.name);
 
-	cleanEnvVar("LD_AUDIT");
+	//Any release
+	cleanEnvVar("LD_AUDIT", "SLSsteam.so");
+	cleanEnvVar("LD_AUDIT", "library-inject.so");
+
+	//Arch release
+	cleanEnvVar("LD_AUDIT", "libSLSsteam.so");
+	cleanEnvVar("LD_AUDIT", "libSLS-library-inject.so");
 	//TODO: Investigate weird logging. Not like it's necessary anymore
 	//cleanEnvVar("LD_PRELOAD");
 
