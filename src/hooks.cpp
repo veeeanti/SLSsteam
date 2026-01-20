@@ -578,7 +578,9 @@ static void hkClientRemoteStorage_PipeLoop(void* pClientRemoteStorage, void* a1,
 		hooked = true;
 	}
 	
+	FakeAppIds::pipeLoop(false);
 	Hooks::IClientRemoteStorage_PipeLoop.tramp.fn(pClientRemoteStorage, a1, a2, a3);
+	FakeAppIds::pipeLoop(true);
 }
 
 static uint32_t hkClientUtils_GetAppId(void* pClientUtils)
