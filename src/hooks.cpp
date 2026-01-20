@@ -758,7 +758,7 @@ static uint32_t hkClientUser_GetSteamId(uint32_t steamId)
 		g_currentSteamId = steamId;
 	}
 
-	Ticket::SavedTicket ticket = Ticket::getCachedEncryptedTicket(g_pClientUtils->getAppId());
+	Ticket::SavedTicket ticket = Ticket::getCachedEncryptedTicket(FakeAppIds::getRealAppIdForCurrentPipe());
 
 	if (ticket.steamId)
 	{

@@ -148,7 +148,7 @@ Ticket::SavedTicket Ticket::getCachedEncryptedTicket(uint32_t appId)
 
 	SavedTicket ticket {};
 
-	if (realAppId && fakeAppId && realAppId != fakeAppId)
+	if (realAppId && fakeAppId && appId != realAppId)
 	{
 		g_pLog->once("Returning empty cached encrypted ticket for %u because it's set to %u\n", realAppId, fakeAppId);
 		return ticket;
