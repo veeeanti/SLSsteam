@@ -260,6 +260,17 @@ namespace Patterns
 		};
 	}
 
+	namespace IClientUGC
+	{
+		Pattern_t PipeLoop
+		{
+			"IClientUGC::PipeLoop",
+			"FF B5 ? ? ? ? 50 8D 86 ? ? ? ? 68 76 11 00 00",
+			SigFollowMode::PrologueUpwards,
+			std::vector<uint8_t> { 0x56, 0x57, 0xe5, 0x89, 0x55 }
+		};
+	}
+
 	namespace IClientUserStats
 	{
 		Pattern_t PipeLoop

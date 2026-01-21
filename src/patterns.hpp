@@ -92,6 +92,11 @@ namespace Patterns
 		extern Pattern_t RequiresLegacyCDKey;
 	}
 
+	namespace IClientUGC
+	{
+		extern Pattern_t PipeLoop;
+	}
+
 	namespace IClientUserStats
 	{
 		extern Pattern_t PipeLoop;

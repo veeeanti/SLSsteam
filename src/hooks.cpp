@@ -577,8 +577,17 @@ static void hkClientRemoteStorage_PipeLoop(void* pClientRemoteStorage, void* a1,
 		hooked = true;
 	}
 	
+	//Cloud & Workshop
 	FakeAppIds::pipeLoop(false);
 	Hooks::IClientRemoteStorage_PipeLoop.tramp.fn(pClientRemoteStorage, a1, a2, a3);
+	FakeAppIds::pipeLoop(true);
+}
+
+static void hkClientUGC_PipeLoop(void* pClientUGC, void* a1, void* a2, void* a3)
+{
+	//Workshop
+	FakeAppIds::pipeLoop(false);
+	Hooks::IClientUGC_PipeLoop.tramp.fn(pClientUGC, a1, a2, a3);
 	FakeAppIds::pipeLoop(true);
 }
 
@@ -818,6 +827,7 @@ static void hkClientUser_PipeLoop(void* pClientUser, void* a1, void* a2, void* a
 
 static void hkClientUserStats_PipeLoop(void* pClientUserStats, void* a1, void* a2, void* a3)
 {
+	//Achievements
 	FakeAppIds::pipeLoop(false);
 	Hooks::IClientUserStats_PipeLoop.tramp.fn(pClientUserStats, a1, a2, a3);
 	FakeAppIds::pipeLoop(true);
@@ -956,6 +966,7 @@ namespace Hooks
 	DetourHook<IClientAppManager_PipeLoop_t> IClientAppManager_PipeLoop;
 	DetourHook<IClientApps_PipeLoop_t> IClientApps_PipeLoop;
 	DetourHook<IClientRemoteStorage_PipeLoop_t> IClientRemoteStorage_PipeLoop;
+	DetourHook<IClientUGC_PipeLoop_t> IClientUGC_PipeLoop;
 	DetourHook<IClientUtils_PipeLoop_t> IClientUtils_PipeLoop;
 	DetourHook<IClientUser_PipeLoop_t> IClientUser_PipeLoop;
 	DetourHook<IClientUserStats_PipeLoop_t> IClientUserStats_PipeLoop;
@@ -1031,6 +1042,7 @@ bool Hooks::setup()
 		&& IClientApps_PipeLoop.setup(Patterns::IClientApps::PipeLoop, hkClientApps_PipeLoop)
 		&& IClientAppManager_PipeLoop.setup(Patterns::IClientAppManager::PipeLoop, hkClientAppManager_PipeLoop)
 		&& IClientRemoteStorage_PipeLoop.setup(Patterns::IClientRemoteStorage::PipeLoop, hkClientRemoteStorage_PipeLoop)
+		&& IClientUGC_PipeLoop.setup(Patterns::IClientUGC::PipeLoop, hkClientUGC_PipeLoop)
 		&& IClientUtils_PipeLoop.setup(Patterns::IClientUtils::PipeLoop, hkClientUtils_PipeLoop)
 		&& IClientUser_PipeLoop.setup(Patterns::IClientUser::PipeLoop, hkClientUser_PipeLoop)
 		&& IClientUserStats_PipeLoop.setup(Patterns::IClientUserStats::PipeLoop, hkClientUserStats_PipeLoop)
@@ -1078,6 +1090,7 @@ void Hooks::place()
 	IClientApps_PipeLoop.place();
 	IClientAppManager_PipeLoop.place();
 	IClientRemoteStorage_PipeLoop.place();
+	IClientUGC_PipeLoop.place();
 	IClientUtils_PipeLoop.place();
 	IClientUser_PipeLoop.place();
 	IClientUserStats_PipeLoop.place();
@@ -1117,6 +1130,7 @@ void Hooks::remove()
 	IClientApps_PipeLoop.remove();
 	IClientAppManager_PipeLoop.remove();
 	IClientRemoteStorage_PipeLoop.remove();
+	IClientUGC_PipeLoop.remove();
 	IClientUtils_PipeLoop.remove();
 	IClientUser_PipeLoop.remove();
 	IClientUserStats_PipeLoop.remove();
