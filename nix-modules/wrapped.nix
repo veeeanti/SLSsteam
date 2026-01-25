@@ -19,7 +19,7 @@ in
     installPhase = ''
       mkdir -p $out/bin
       makeWrapper ${pkgs.steam}/bin/steam $out/bin/SLSsteam \
-        --set LD_AUDIT "${sls-steam}/SLSsteam.so"
+        --set LD_AUDIT "${sls-steam}/library-inject.so:${sls-steam}/SLSsteam.so"
     '';
 
     meta = {
